@@ -66,7 +66,7 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 03.06.2020.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 04.06.2020.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyESP #########################################################################################################################
 prog_vers="1.0.0"
@@ -180,7 +180,6 @@ if [[ ! -f "${EASYEFI_SUPPORT}"/AutoUpdateLock.txt ]]; then
     EasyEFIconf=$( cat "${EASYEFI_SUPPORT}"/EasyEFIconf.plist )
     if [[ $(echo "$EasyEFIconf"| grep -A 1 -e "ReadyToAutoUpdate&lt;/key&gt;" | grep -o true ) = "true" ]]; then
         if [[ -f "${EASYEFI_SUPPORT}"/AutoupdatesInfo.txt ]]; then
-            plutil -replace ReadyToAutoUpdate -bool No "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
             autoupdate_string=$( cat "${EASYEFI_SUPPORT}"/AutoupdatesInfo.txt | tr '\n' ';' ); IFS=';' autoupdate_list=(${autoupdate_string}); unset IFS 
 
             
@@ -208,14 +207,15 @@ echo ''             &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'sleep 1'             &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo ''             &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'ProgPath=''"'$(echo "$EASYEFI_PATH")'"''' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
-echo 'if [[ -d "${ProgPath}" ]]; then ' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
+echo 'if [[ -d "${ProgPath}" ]] &amp;&amp; [[ $( cat ~/Library/Application\ Support/EasyEFIsupport/EasyEFIconf.plist | grep -A 1 -e "ReadyToAutoUpdate&lt;/key&gt;" | grep -o true) = "true" ]]; then ' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'while true; do' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'if [[ ! $(ps xao command | grep -i "EasyEFI.app" | grep -v grep | wc -l | bc) = 0 ]]; then' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'sleep 2; else break; fi; done' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'vers=$(cat ~/.EasyEFIupdates/document.wflow | egrep "prog_vers=|edit_vers=" | sed s'"'/prog_vers=//'"' | sed s'"'/edit_vers=//'"' | tr "\\n" "." | egrep -o "[0-9.]" | tr -d "\\n" | cut -c1-9)' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        mv -f ~/.EasyEFIupdates/document.wflow "${ProgPath}" ; rm -Rf ~/.EasyEFIupdates' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh 
 echo '        plutil -replace CFBundleShortVersionString -string "$vers" "${ProgPath}"/Info.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
-echo '        touch  "${ProgPath}"/../.' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh  
+echo '        touch  "${ProgPath}"/../.' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh 
+echo '        plutil -replace ReadyToAutoUpdate -bool No ~/Library/Application\ Support/EasyEFIsupport/EasyEFIconf.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo ''  &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'fi' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'exit' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
@@ -1444,7 +1444,7 @@ EXIT_PROGRAM
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>449.000000:513.000000</string>
+				<string>632.000000:615.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/English.lproj/main.nib</string>
 			</dict>
