@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>AMApplicationBuild</key>
-	<string>444.7</string>
+	<string>492</string>
 	<key>AMApplicationVersion</key>
-	<string>2.8</string>
+	<string>2.10</string>
 	<key>AMDocumentVersion</key>
 	<string>2</string>
 	<key>actions</key>
@@ -55,7 +55,7 @@
 				<key>ActionBundlePath</key>
 				<string>/System/Library/Automator/Run Shell Script.action</string>
 				<key>ActionName</key>
-				<string>Run Shell Script</string>
+				<string>Запустить shell-скрипт</string>
 				<key>ActionParameters</key>
 				<dict>
 					<key>COMMAND_STRING</key>
@@ -70,7 +70,7 @@ ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bas
 
 ############################################################################## EasyESP #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="008"
+edit_vers="009"
 ##################################################################################################################################################################################################################
 
 RESTART_APP(){
@@ -577,7 +577,6 @@ fi
 done
 
 kill $mspid
-wait $mspid 2&gt;/dev/null
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
 }
@@ -1053,7 +1052,7 @@ if [[ $loc = "ru" ]]; then
 osascript &lt;&lt;EOD
 tell application "System Events"    activate
 set ThemeList to {$efi_prompt_list}
-set FavoriteThemeAnswer to choose from list ThemeList with title "EasyEFI v.${prog_vers:0:3}($edit_vers) / Список EFI / ESP разделов"  with prompt "Выберите один или несколько (CMD + клик) для подключения:\nЗнаком + отмечены подключенные." with multiple selections allowed OK button name {"Выполнить!"} cancel button name {"Выход"}
+set FavoriteThemeAnswer to choose from list ThemeList with title "EasyEFI v.${prog_vers:0:3}($edit_vers) / Список EFI (ESP) разделов"  with prompt "Выберите один или несколько (CMD + клик) для подключения:\nЗнаком + отмечены подключенные." with multiple selections allowed OK button name {"Выполнить!"} cancel button name {"Выход"}
 end tell
 EOD
 
@@ -1062,7 +1061,7 @@ else
 osascript &lt;&lt;EOD
 tell application "System Events"    activate
 set ThemeList to {$efi_prompt_list}
-set FavoriteThemeAnswer to choose from list ThemeList with title "EasyEFI v.${prog_vers:0:3}($edit_vers) / EFI / ESP partition list"  with prompt "Select one or more (CMD + click) to mount:\nA + sign indicates mounted.." with multiple selections allowed cancel button name {"Exit"}
+set FavoriteThemeAnswer to choose from list ThemeList with title "EasyEFI v.${prog_vers:0:3}($edit_vers) / EFI (ESP) partition list"  with prompt "Select one or more (CMD + click) to mount:\nA + sign indicates mounted.." with multiple selections allowed cancel button name {"Exit"}
 end tell
 EOD
 
@@ -1107,7 +1106,6 @@ while [ $var1 != 0 ]; do
 done
 
 kill $mspid
-wait $mspid 2&gt;/dev/null
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
 
@@ -1153,7 +1151,6 @@ while [ $var1 != 0 ]; do
 done
 
 kill $mspid
-wait $mspid 2&gt;/dev/null
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
 fi
@@ -1197,7 +1194,6 @@ while [ $var1 != 0 ]; do
 done
 
 kill $mspid
-wait $mspid 2&gt;/dev/null
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
 
@@ -1225,8 +1221,255 @@ fi
 UPDATE_EASYEFI_CONF_CACHE
 }
 
+START_CHECK_HOTPLUG(){
+# подготовка данных для вычисления hotplug
+ustring=$( ioreg -c IOMedia -r  | tr -d '"|+{}\t'  | grep -A 10 -B 5  "Whole = Yes" | grep "BSD Name" | grep -oE '[^ ]+$' | xargs | tr ' ' ';') ; IFS=";"; uuid_list=($ustring); unset IFS; uuid_count=${#uuid_list[@]}
+        if [[ ! $old_uuid_count = $uuid_count ]]; then old_uuid_count=$uuid_count; fi
 
+pstring=$( df | cut -f1 -d " " | grep "/dev" | cut -f3 -d "/") ; puid_list=($pstring);  puid_count=${#puid_list[@]}
+        if [[ ! $old_puid_count = $puid_count ]]; then  old_puid_count=$puid_count; old_puid_list=($pstring); old_uuid_list=($ustring); fi
+
+while true; do sleep 2
+
+hotplug=0; synchro=0
+############ disk hotplug check ###############################
+ustring=`ioreg -c IOMedia -r  | tr -d '"|+{}\t'  | grep -A 10 -B 5  "Whole = Yes" | grep "BSD Name" | grep -oE '[^ ]+$' | xargs | tr ' ' ';'` ; IFS=";"; uuid_list=($ustring); unset IFS; uuid_count=${#uuid_list[@]};
+
+        if [[ ! $old_uuid_count = $uuid_count ]]; then
+            if [[  $old_uuid_count -lt $uuid_count ]]; then 
+                synchro=1
+               ioreg_iomedia=`ioreg -c IOMedia -r | tr -d '"|+{}\t'`
+                    disk_images=`echo "$ioreg_iomedia" | egrep -A 22 "Apple " | grep "BSD Name" | cut -f2 -d "="  | tr -d " " | tr '\n' ';'`
+                    IFS=';'; ilist=($disk_images); unset IFS; posi=${#ilist[@]}
+                else
+                    synchro=3
+            fi
+                diff_uuid=()
+                IFS=';'; diff_uuid=(`echo ${uuid_list[@]} ${old_uuid_list[@]} | tr ' ' '\n' | sort | uniq -u | tr '\n' ';'`); unset IFS; posui=${#diff_uuid[@]}
+                if [[ ! $posi = 0 ]] &amp;&amp; [[ ! $posui = 0 ]]; then 
+                    for (( i=0; i&lt;$posui; i++ )); do
+                        match=0
+                    for (( n=0; n&lt;=$posi; n++ )); do
+                        if [[ "${diff_uuid[$i]}" = "${ilist[$n]}" ]]; then match=1;  break; fi
+                    done
+                        if [[ ! $match = 1 ]]; then   hotplug=1; fi
+                    done
+                 else
+                    
+                     hotplug=1
+            fi
+                            
+          old_uuid_count=$uuid_count ; old_uuid_list=($ustring)
+            
+        fi
+
+if [[ $hotplug = 0 ]]; then synchro=0
+
+############ partitions hotplug check ###############################
+pstring=`df | cut -f1 -d " " | grep "/dev" | cut -f3 -d "/"` ; puid_list=($pstring);  puid_count=${#puid_list[@]}
+        if [[ ! $old_puid_count = $puid_count ]]; then
+               if [[  $old_puid_count -lt $puid_count ]]; then
+						synchro=1                       
+                    ioreg_iomedia=`ioreg -c IOMedia -r | tr -d '"|+{}\t'`
+                    disk_images=`echo "$ioreg_iomedia" | egrep -A 22 "Apple " | grep "BSD Name" | cut -f2 -d "="  | tr -d " " | tr '\n' ';'`
+                    IFS=';'; ilist=($disk_images); unset IFS; posi=${#ilist[@]}
+					else
+						synchro=3
+               fi
+                    
+                    diff_list=()
+                    IFS=';'; diff_list=(`echo ${puid_list[@]} ${old_puid_list[@]} | tr ' ' '\n' | sort | uniq -u | tr '\n' ';'`); unset IFS; posdi=${#diff_list[@]}
+                    if [[ ! $posi = 0 ]] &amp;&amp; [[ ! $posdi = 0 ]]; then 
+                            
+                        for (( i=0; i&lt;$posdi; i++ )); do
+                            match=0
+                            dfdstring=`echo ${diff_list[$i]} | rev | cut -f2-3 -d"s" | rev`
+                                
+                                for (( n=0; n&lt;=$posi; n++ )); do
+                                     if [[ "$dfdstring" = "${ilist[$n]}" ]]; then match=1;  break; fi
+                                
+                        done
+                                     
+                                     if [[ ! $match = 1 ]]; then  hotplug=1; fi
+                        done
+
+                        else
+                                     hotplug=1
+                    fi
+            
+           old_puid_count=$puid_count; old_puid_list=($pstring)
+            
+        fi
+
+fi
+
+if [[ $hotplug = 0 ]]; then synchro=0
+###### recheck loaders #############################
+    if [[ ! $CheckLoaders = 0 ]]; then
+        for pnum in ${!dlist[@]}
+        do
+        mounted_check=$( df | grep ${dlist[$pnum]} )   
+            if [[ ! $mounted_check = "" ]]; then 
+            vname=`df | egrep ${dlist[$pnum]} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
+                    if ! loader_sum=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi 2&gt;/dev/null); then loader_sum=0; fi
+
+                    if [[ ! ${mounted_loaders_list[$pnum]} = ${loader_sum} ]]; then hotplug=1; echo "1" &gt; ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag; break; fi
+            fi
+        done
+    fi
+fi
+
+if [[ $hotplug = 0 ]]; then synchro=0; fi
+
+############ waiting for mount in finder #############################
+if [[ ${synchro} = 1 ]]; then 
+
+ioreg_iomedia=$( ioreg -c IOMedia -r | tr -d '"|+{}\t' )
+usb_iomedia=$( IOreg -c IOBlockStorageServices -r | grep "Device Characteristics" | tr -d '|{}"' | sed s'/Device Characteristics =//' | rev | cut -f2-3 -d, | rev | tr '\n' ';'  | xargs )
+drives_iomedia=$( echo "$ioreg_iomedia" |  egrep -A 22 "&lt;class IOMedia," )
+string=$( diskutil list | grep EFI | grep -oE '[^ ]+$' | xargs | tr ' ' ';' )
+disk_images=$( echo "$ioreg_iomedia" | egrep -A 22 "Apple " | grep "BSD Name" | cut -f2 -d "="  | tr -d " " | tr '\n' ';' )
+syspart=$( df / | grep /dev | cut -f1 -d " " | sed s'/dev//' | tr -d '/ \n' )
+IFS=';'; dlist=($string); ilist=($disk_images); usb_iolist=($usb_iomedia); unset IFS; pos=${#dlist[@]}; posi=${#ilist[@]}; pusb=${#usb_iolist[@]}
+
+# exclude disk images
+if [[ ! $posi = 0 ]]; then
+tmlist=()
+for ((i=0;i&lt;$pos;i++)); do 
+        match=0
+        for ((n=0;n&lt;$posi;n++)); do
+             if [[ $( echo ${dlist[i]} | rev | cut -f2-3 -d"s" | rev ) = ${ilist[n]} ]]; then match=1; break; fi
+        done
+            if [[ $match = 0 ]]; then tmlist+=( ${dlist[i]} ); fi
+done
+if [[ ! ${#tmlist[@]} = 0 ]]; then dlist=( ${tmlist[@]} ); pos=${#dlist[@]}; fi
+fi
+
+# make list of disks
+dmlist=(); for (( i=0; i&lt;$pos; i++ )) do dmlist+=( $( echo ${dlist[i]} | rev | cut -f2-3 -d"s" | rev ) ); done
+dmlist=( $(echo "${dmlist[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') ); posd=${#dmlist[@]}
+
+# get list of usb drives
+past_rmlist=( ${rmlist[@]} ); rmlist=(); posrm=0
+if [[ ! $pusb = 0 ]]; then
+
+usbnames=(); for (( i=0; i&lt;$pusb; i++ )); do usbname="$(echo ${usb_iolist[i]} | cut -f3 -d=)"; usbnames+=( "${usbname}" ); done
+
+for (( i=0; i&lt;$posd; i++ ))
+ do
+    dmname=$( echo "$drives_iomedia" | grep -B 10 ${dmlist[i]} | grep -m 1 -w "IOMedia"  | cut -f1 -d "&lt;" | sed -e s'/-o //'  | sed -e s'/Media//' | sed 's/ *$//' | tr -d "\n")
+    if [[ ${#dmname} -gt 30 ]]; then dmname=$( echo "$dmname" | cut -f1-2 -d " " ); fi
+        for (( n=0; n&lt;$pusb; n++ )); do if [[ ! $( echo "$dmname" | grep -oE "${usbnames[n]}" ) = ""  ]]; then rmlist+=( ${dmlist[i]} ); fi; done
+ done                            
+fi
+
+posrm=${#rmlist[@]}
+
+if [[ $posrm = 0 ]]; then usb=0; else usb=1; fi
+
+if [[ ! $pos = 0 ]]; then 
+		var0=$pos; num=0; dnum=0; unset nlist; unset rnlist
+	while [[ ! $var0 = 0 ]] 
+		do
+		string=$( echo ${dlist[$num]} )
+    if [[ $string = $syspart ]]; then unset dlist[$num]; let "pos--"
+            else
+		dstring=$( echo $string | rev | cut -f2-3 -d"s" | rev )
+		dlenth=$( echo ${#dstring} )
+
+		var10=$posi; numi=0; out=0
+        while [[ ! $var10 = 0 ]] 
+		do
+            if [[ ${dstring} = ${ilist[$numi]} ]]; then
+            unset dlist[$num]; let "pos--"; out=1
+            fi 
+            if [[ $out = 1 ]]; then break; fi
+            let "var10--"; let "numi++"
+        done
+  
+		if [[ $var10 = 0 ]]; then nlist+=( $num ); fi
+            
+    fi	
+		let "var0--"
+		let "num++"
+	done
+fi
+
+new_rmlist=( $( echo ${rmlist[@]} ${past_rmlist[@]} | tr ' ' '\n' | sort | uniq -u | tr '\n' ' ' ) )
+
+if [[ ! ${#new_rmlist[@]} = 0 ]]; then
+    init_time="$(date +%s)"; usblist=(); warning_sent=0
+    for z in ${dlist[@]}; do for y in ${new_rmlist[@]}; do if [[ "$y" = "$( echo $z | rev | cut -f2-3 -d"s" | rev )" ]]; then usblist+=( $z ); break; fi; done; done
+    if [[ ! ${#usblist[@]} = 0 ]]; then
+        realEFI_list=($(ioreg -c IOMedia -r | tr -d '"|+{}\t' | egrep -A 22 "&lt;class IOMedia," | grep -ib22  "EFI system partition" | grep "BSD Name" | egrep -o "disk[0-9]{1,3}s[0-9]{1,3}" | tr '\n' ' '))
+        if [[ ! ${#realEFI_list[@]} = 0 ]]; then
+		temp_usblist=()
+        for z in ${usblist[@]}; do for y in ${!realEFI_list[@]}; do match=0; if [[ ${z} = ${realEFI_list[y]} ]]; then match=1; break; fi; done; if [[ ${match} = 0 ]]; then temp_usblist+=(${z}); fi; done
+        usblist=(${temp_usblist[@]})
+        fi
+    fi
+    if [[ ! ${#usblist[@]} = 0 ]]; then
+        while true; do
+            mounted_list=( $( df | cut -f1 -d" " | grep disk | cut -f3 -d/ | tr '\n' ' ') )
+            usb_mounted_list=()
+            for z in ${mounted_list[@]}; do for y in ${usblist[@]}; do if [[ ${z} = ${y} ]]; then usb_mounted_list+=( ${z} ); break; fi; done; done
+            diff_usb=( $( echo ${usblist[@]} ${usb_mounted_list[@]} | tr ' ' '\n' | sort | uniq -u | tr '\n' ' ' ) )
+            if [[ ${#diff_usb[@]} = 0 ]]; then break; fi
+            exec_time="$(($(date +%s)-init_time))"
+            if [[ ${exec_time} -ge 1 ]] &amp;&amp; [[ ${warning_sent} = 0 ]]; then 
+                if [[ $loc = "ru" ]]; then
+                    MESSAGE='"ОЖИДАНИЕ ГОТОВНОСТИ РАЗДЕЛОВ ! ..."'
+                else
+                    MESSAGE='"WAITING FOR COMPLETE MOUNTING !..."'
+                fi
+                osascript -e 'display dialog '"${MESSAGE}"' '"${icon_string}"' buttons { "OK"} giving up after 3' &amp;
+                msgpid=$!
+                warning_sent=1
+            fi
+            if [[ ${exec_time} -ge 30 ]]; then break; fi
+            sleep 0.25
+        done        
+    fi
+
+fi
+fi
+if [[ $hotplug = 1 ]]; then
+echo "${msgpid}" &gt; ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag
+pkill  "System Events"
+break
+fi
+
+done
+exit
+}
+
+RECHECK_LOADERS(){
+if [[ ! $CheckLoaders = 0 ]]; then
+		update_screen_flag=0
+        for pnum in ${!dlist[@]}
+        do
+        mounted_check=$( df | grep ${dlist[$pnum]} )   
+            if [[ ! $mounted_check = "" ]]; then 
+            vname=`df | egrep ${dlist[$pnum]} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
+                    if ! loader_sum=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi 2&gt;/dev/null); then loader_sum=0; fi
+
+                    if [[ ${loader_sum} = "10610877a9cc0ed958ff74ed7a192474" ]]; then md5_loader=${loader_sum}; CORRECT_OC_VERS
+                       if [[ ! ${old_oc_revision} = ${oc_revision} ]]; then old_oc_revision=${oc_revision}; update_screen_flag=1; else update_screen_flag=0; fi
+                    fi
+
+                    if [[ ! ${mounted_loaders_list[$pnum]} = ${loader_sum} ]] || [[ ${update_screen_flag} = 1 ]]; then 
+                    mounted_loaders_list[$pnum]=${loader_sum}
+                    if [[ ${loader_sum} = 0 ]]; then loader="empty"; else md5_loader=${loader_sum}; loader=""; oc_revision=""; revision=""; GET_LOADER_STRING; fi
+                    ldlist[pnum]=$loader; lddlist[pnum]=${dlist[$pnum]}
+                    let "chs=pnum+1"; if [[ "${recheckLDs}" = "1" ]]; then recheckLDs=2; fi; hotplug=1; break; fi
+            fi
+        done
+fi
+}
 ################################### INIT ##################################################
+if [[ ! $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' ') = "" ]]; then 
+   kill $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' '); fi
+EasyEFI_PID=$(ps xao pid,command | grep -i "EasyEFI.app" | grep -v grep | awk '{print $1;}')
 EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEFIsupport" | xargs)
  
 if [[ ! -d "${EASYEFI_SUPPORT}" ]]; then mkdir -p "${EASYEFI_SUPPORT}"; fi
@@ -1253,6 +1496,7 @@ if [[ ! "$EasyEFIconf" = "" ]]; then
 if [[ $(echo "$EasyEFIconf"  | grep -A 1 -e "EasyEFIsimple&lt;/key&gt;" | grep -o false ) = "false" ]]; then menu_mode=1; fi
 fi
 
+
 GET_FLAG
 UPDATE_CACHE
 GET_CONFIG_HASHES
@@ -1261,6 +1505,9 @@ GET_APP_ICON
 CHECK_RESTART_APP_CLEAN &amp;
 CHECK_CLEAN_AUTOUPDATE &amp;
 CHECK_START_UPDATE
+
+hotplug_flag=0
+
 ############################################################################################
 #################################### MAIN ##################################################
 
@@ -1275,12 +1522,23 @@ sleep 0.5
 GETARR
 GETLIST
 kill $mspid
-wait $mspid 2&gt;/dev/null
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
 while true; do
 #################### MAIN MENU #####################
-result_names=$( ASK_LIST ) 
+START_CHECK_HOTPLUG &amp;
+hotplug_pid=$!
+result_names=$( ASK_LIST )
+if [[ -f ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag ]]; then
+	hotplug_flag=1; msgpid=$(cat ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag)
+	rm -f ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag 
+	if [[ ! ${msgpid} = "" ]]; then kill ${msgpid}; fi
+	if [[ -f ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag ]]; then
+		RECHECK_LOADERS
+		rm -f ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag
+	fi
+fi
+kill ${hotplug_pid}
 
 if [[ ! $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' '); fi
@@ -1323,10 +1581,11 @@ if [[ ${modename} = "" ]]; then
         vname=`df | egrep ${string} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
         if [[ $mcheck = "Yes" ]]; then if [[ "${OpenFinder}" = "1" ]] || [[ "${wasmounted}" = "1" ]]; then open "$vname"; fi; fi
     done
-        if [[ ${menu_mode} = 0 ]]; then break; fi
+        if [[ ${menu_mode} = 0 ]] &amp;&amp; [[ ! ${hotplug_flag} = 1 ]]; then break; fi
     fi
     fi
 fi
+if [[ ${hotplug_flag} = 1 ]]; then GETARR; hotplug_flag=0; fi
 UPDATE_SCREEN
 done
 
@@ -1360,9 +1619,9 @@ EXIT_PROGRAM
 				<key>Keywords</key>
 				<array>
 					<string>Shell</string>
-					<string>Script</string>
-					<string>Command</string>
-					<string>Run</string>
+					<string>Скрипт</string>
+					<string>Команда</string>
+					<string>Запустить</string>
 					<string>Unix</string>
 				</array>
 				<key>OutputUUID</key>
@@ -1391,9 +1650,9 @@ EXIT_PROGRAM
 					<key>1</key>
 					<dict>
 						<key>default value</key>
-						<string></string>
+						<false/>
 						<key>name</key>
-						<string>source</string>
+						<string>CheckedForUserDefaultShell</string>
 						<key>required</key>
 						<string>0</string>
 						<key>type</key>
@@ -1404,9 +1663,9 @@ EXIT_PROGRAM
 					<key>2</key>
 					<dict>
 						<key>default value</key>
-						<false/>
+						<string></string>
 						<key>name</key>
-						<string>CheckedForUserDefaultShell</string>
+						<string>source</string>
 						<key>required</key>
 						<string>0</string>
 						<key>type</key>
@@ -1444,9 +1703,9 @@ EXIT_PROGRAM
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>632.000000:615.000000</string>
+				<string>603.500000:582.000000</string>
 				<key>nibPath</key>
-				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/English.lproj/main.nib</string>
+				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/Base.lproj/main.nib</string>
 			</dict>
 			<key>isViewVisible</key>
 			<true/>
