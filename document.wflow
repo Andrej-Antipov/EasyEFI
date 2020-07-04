@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 04.06.2020.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 05.07.2020.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyESP #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="009"
+edit_vers="012"
 ##################################################################################################################################################################################################################
 
 RESTART_APP(){
@@ -214,6 +214,7 @@ echo 'sleep 2; else break; fi; done' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'vers=$(cat ~/.EasyEFIupdates/document.wflow | egrep "prog_vers=|edit_vers=" | sed s'"'/prog_vers=//'"' | sed s'"'/edit_vers=//'"' | tr "\\n" "." | egrep -o "[0-9.]" | tr -d "\\n" | cut -c1-9)' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        mv -f ~/.EasyEFIupdates/document.wflow "${ProgPath}" ; rm -Rf ~/.EasyEFIupdates' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh 
 echo '        plutil -replace CFBundleShortVersionString -string "$vers" "${ProgPath}"/Info.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
+echo '        plutil -replace NSHumanReadableCopyright -string "Copyright © 2020 gosvamih. All rights reserved." "${ProgPath}"/Info.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        touch  "${ProgPath}"/../.' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh 
 echo '        plutil -replace ReadyToAutoUpdate -bool No ~/Library/Application\ Support/EasyEFIsupport/EasyEFIconf.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo ''  &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
@@ -273,6 +274,11 @@ osascript -e 'display dialog '"${error_message}"'  with icon caution buttons { "
 if [[ ${menu_mode} = 0 ]]; then EXIT_PROGRAM; fi
 }
 
+ERROR_OS_VERSION(){
+menu_mode=0
+if [[ $loc = "ru" ]]; then error_message='"Mac OS '$(sw_vers -productVersion)' не поддерживается !"'; else error_message='"The Mac OS '$(sw_vers -productVersion)' is not supported !"'; fi; ERROR_MSG
+}
+
 DISPLAY_NOTIFICATION(){
 osascript -e 'display dialog '"${MESSAGE}"'  '"${icon_string}"'  buttons { "OK"}  giving up after 3' &gt;/dev/null 2&gt;/dev/null
 }
@@ -292,13 +298,28 @@ osascript -e 'display dialog '"${MESSAGE}"' '"${icon_string}"' buttons { "OK"}' 
 
 ################ запрос пароля sudo #################################
 PROMT_SUDO_PASSWORD(){
+
+if [[ $flag = 0 ]] &amp;&amp; [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then
+    if [[ $loc = "ru" ]]; then
+        sudo_message='Для подключения EFI разделов в режиме безопасной загрузки нужен пароль!'
+    else
+        sudo_message='Password is required to mount EFI partitions in safe boot mode!'
+    fi
+else
+   if [[ $loc = "ru" ]]; then
+        sudo_message='Для подключения EFI разделов нужен пароль!'
+    else
+        sudo_message='Password is required to mount EFI partitions!'
+    fi
+fi
+
 mypassword=""        
         TRY=3
         while [[ ! $TRY = 0 ]]; do
         if [[ $loc = "ru" ]]; then
-        if mypassword="$(osascript -e 'Tell application "System Events" to display dialog "Для подключения EFI разделов нужен пароль!\nОн будет храниться в вашей связке ключей\n\nПользователь:  '"$(id -F)"'\nВведите ваш пароль:" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""' -e 'text returned of result')"; then cansel=0; else cansel=1; fi 2&gt;/dev/null
+        if mypassword="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nОн будет храниться в вашей связке ключей\n\nПользователь:  '"$(id -F)"'\nВведите ваш пароль:" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""' -e 'text returned of result')"; then cansel=0; else cansel=1; fi 2&gt;/dev/null
         else
-        if mypassword="$(osascript -e 'Tell application "System Events" to display dialog "Password is required to mount EFI partitions!\nIt will be keeped in your keychain\n\nUser Name:  '"$(id -F)"'\nEnter your password:" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""' -e 'text returned of result')"; then cansel=0; else cansel=1; fi 2&gt;/dev/null
+        if mypassword="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nIt will be keeped in your keychain\n\nUser Name:  '"$(id -F)"'\nEnter your password:" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""' -e 'text returned of result')"; then cansel=0; else cansel=1; fi 2&gt;/dev/null
         fi    
                 if [[ $cansel = 1 ]] || [[ "${mypassword}" = "" ]]; then break; fi  
                 if echo "${mypassword}" | sudo -Sk printf '' 2&gt;/dev/null; then  break
@@ -354,7 +375,7 @@ mypassword=$(security find-generic-password -a ${USER} -s efimounter -w 2&gt;/de
 
 NEED_PASSWORD(){
 need_password=0
-if [[ ! $flag = 0 ]]; then 
+if [[ ! $flag = 0 ]] || [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then 
               GET_PASSWORD
         if ! echo "${mypassword}" | sudo -Sk printf "" 2&gt;/dev/null; then ENTER_PASSWORD "force"
            if [[ $mypassword = "" ]]; then need_password=1; fi
@@ -370,9 +391,8 @@ fi
 }
 
 GET_FLAG(){
-macos=`sw_vers -productVersion`
-macos=`echo ${macos//[^0-9]/}`
-macos=${macos:0:4}
+macos=$(sw_vers -productVersion | tr -d .); macos=${macos:0:4}
+if [[ "${macos}" -gt "1015" ]] || [[ "${macos}" -lt "1011" ]]; then ERROR_OS_VERSION; fi
 if [[ "$macos" = "1011" ]] || [[ "$macos" = "1012" ]]; then flag=0; else flag=1; GET_PASSWORD; fi
 }
 
@@ -1202,6 +1222,7 @@ fi
 }
 
 EXIT_PROGRAM(){
+if [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then if [[ ! $(kextstat -l | grep -ow com.apple.filesystems.msdosfs) = "" ]]; then echo "${mypassword}" | sudo -S kextunload -b com.apple.filesystems.msdosfs; fi; fi
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
 sudo -k
@@ -1466,9 +1487,28 @@ if [[ ! $CheckLoaders = 0 ]]; then
         done
 fi
 }
+
+IF_UNLOCK_SAFE_MODE(){
+if [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then 
+    if [[ $(kextstat -l | grep -ow com.apple.filesystems.msdosfs) = "" ]]; then 
+        if [[ ! "${mypassword}" = "" ]]; then
+ 	         rsync -avq  /S*/L*/E*/msdosfs.kext ~/Library/Application\ Support/EasyEFIsupport
+	         /usr/libexec/PlistBuddy -c "Add :OSBundleRequired string Safe Boot" ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext/Contents/Info.plist
+             echo "${mypassword}" | sudo -S chown -R root:wheel ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
+             sudo chmod -R 755 ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
+	         sudo kextutil ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext; sudo kextutil ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
+  	         echo "${mypassword}" | sudo -Sk rm -Rf ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
+        fi
+    fi
+fi
+}
+
 ################################### INIT ##################################################
 if [[ ! $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' '); fi
+
+GET_FLAG
+
 EasyEFI_PID=$(ps xao pid,command | grep -i "EasyEFI.app" | grep -v grep | awk '{print $1;}')
 EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEFIsupport" | xargs)
  
@@ -1496,8 +1536,6 @@ if [[ ! "$EasyEFIconf" = "" ]]; then
 if [[ $(echo "$EasyEFIconf"  | grep -A 1 -e "EasyEFIsimple&lt;/key&gt;" | grep -o false ) = "false" ]]; then menu_mode=1; fi
 fi
 
-
-GET_FLAG
 UPDATE_CACHE
 GET_CONFIG_HASHES
 GET_LOCALE 
@@ -1571,7 +1609,8 @@ if [[ ${modename} = "" ]]; then
 
     disk_mount_list=( $(echo "${result_names}" | egrep -o "disk[0-9]*s[0-9]*") )
     if [[ ! ${#disk_mount_list[@]} = "0" ]]; then 
-        NEED_PASSWORD    
+        NEED_PASSWORD
+        IF_UNLOCK_SAFE_MODE    
     if [[ ${need_password} = 0 ]]; then
         UPDATE_CACHE
         GET_OPENFINDER
@@ -1703,7 +1742,7 @@ EXIT_PROGRAM
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>603.500000:582.000000</string>
+				<string>639.500000:551.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/Base.lproj/main.nib</string>
 			</dict>
