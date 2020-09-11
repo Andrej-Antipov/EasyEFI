@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 06.09.2020.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 09.09.2020.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyESP #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="013"
+edit_vers="014"
 ##################################################################################################################################################################################################################
 
 RESTART_APP(){
@@ -655,18 +655,32 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 ################################################### детект загрузчиков ##########################################################################################
 
 CORRECT_OC_VERS(){
-case $( md5 -qq "$vname"/EFI/OC/OpenCore.efi 2&gt;/dev/null ) in 
-        dd2bb459dfbb1fe04ca0cb61bb8f9581 ) oc_revision=.58r;;
-        3e99e56bc16ed23129b3659a3d536ae9 ) oc_revision=.57r;;
-                                        *)     oc_revision=""
-esac 
-}
-
-CORRECT_OC_VERS_1(){
-case $( md5 -qq "$vname"/EFI/OC/OpenCore.efi 2&gt;/dev/null ) in 
-        3255c15833abcb05789af00c0e50bf82 ) oc_revision=.61r;;
-        5010a4db83dacbcc14b090e00472c661 ) oc_revision=.60r;;
-                                        *)     oc_revision=""
+case "${md5_full}" in
+75624767ed4f08a1ebc9f655711ba95d8ef8d1803e91c6718dfee59408b6a468 ) oc_revision=.61d;;
+58c4b4a88f8c41f84683bdf4afa3e77c3255c15833abcb05789af00c0e50bf82 ) oc_revision=.61r;;
+58c4b4a88f8c41f84683bdf4afa3e77c5010a4db83dacbcc14b090e00472c661 ) oc_revision=.60r;;
+bb901639773a1c319a3ff804128bdfb4f663a56f66b9d95fd053a46b0829fa5c ) oc_revision=.60d;;
+01dfbdd3175793d729999c52882dd3b6da4a5e54641317b2aa7715f8b4273791 ) oc_revision=.59r;;
+efbad161ffbf7a17374d08ec924651fef46456574b8b67f603de74c201b4e130 ) oc_revision=.59d;;
+10610877a9cc0ed958ff74ed7a192474dd2bb459dfbb1fe04ca0cb61bb8f9581 ) oc_revision=.58r;;
+d90190bfea64112ed83621079371277ab85c28aa004291a96bf74d95eea3364a ) oc_revision=.58d;;
+10610877a9cc0ed958ff74ed7a1924743e99e56bc16ed23129b3659a3d536ae9 ) oc_revision=.57r;;
+9ff8a0c61dc1332dd58ecc311e0938b088e8aec480eb24e757241580731d2023 ) oc_revision=.57d;;
+12e5d34064fed06441b86b21f3fa3b7d947f8ccfec961d02f54d1a2f5c808504 ) oc_revision=.56r;;
+9004a000df355d09a79ba510c055a5f0db78c5fef3550213e947b8d6fa5338e4 ) oc_revision=.56d;;
+f3b1534643d3eb11fc18ac5a56528d794bdb27730c0c06275e2fc389348d46d0 ) oc_revision=.55r;;
+07b64c16f48d61e5e9f2364467250912217a07b161306324d147681914a319c3 ) oc_revision=.55d;;
+91e8abcf647af737d4a22fe3f98d00c021aa72da926ec362ab58626b60c36ac8 ) oc_revision=.54r;;
+5758e9b672486b863b18f6e5ff001b27d36cb1eafafcd9b94d3526aece5bc8b4 ) oc_revision=.54d;;
+97f744526c733aa2e6505f01f37de6d78cc62a1017afa01c2c75ad4b6fca8df2 ) oc_revision=.53r;;
+b09cd76fadd2f7a14e76003b2ff4016f1d821f7a51eab7c39999328438770fa7 ) oc_revision=.53d;;
+1ca142bf009ed537d84c980196c36d72ba2a5846697e7895753e7b05989738e5 ) oc_revision=.52r;;
+eaba9d5b467da41f5a872630d4ad7ff552f819181055f501b6882c2a73268dbc ) oc_revision=.52d;;
+eb66a8a986762b9cadecb6408ecb1ec7ff42893722bc0a3278c7d8029b797342 ) oc_revision=.51r;;
+c31035549f86156ff5e79b9d87240ec54be8a2620c923129b3bac0b2d1b8fd6b ) oc_revision=.51d;;
+7844acab1d74aeccc5d2696627c1ed3d081f9922be27b2d1e82fc8dbd3426498 ) oc_revision=.50r;;
+c221f59769bd185857b2c30858fe3aa2ec0e6c7dfa2ab84eaad52f167e85466f ) oc_revision=.50d;;
+                                                                *)     oc_revision=""
 esac 
 }
 
@@ -677,40 +691,38 @@ oc_revision=""
 
 GET_CONFIG_VERS "OpenCore"
 
-####### bootx64.efi у версии .57 и .58 одинаковый ###
-######  уточняем версию через хэш OpenCore.efi ######
+######  уточняем версию через хэши BOOTx64.efi + OpenCore.efi ######
 if [[ ${oc_revision} = "" ]]; then
-    if [[ "${md5_loader}" = "10610877a9cc0ed958ff74ed7a192474" ]]; then CORRECT_OC_VERS; fi
-    if [[ "${md5_loader}" = "58c4b4a88f8c41f84683bdf4afa3e77c" ]]; then CORRECT_OC_VERS_1; fi
+    md5_full="${md5_loader}$( md5 -qq "$vname"/EFI/OC/OpenCore.efi )"
+    CORRECT_OC_VERS
 fi
 
 if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
-############## oc_hashes_strings 22 #################
-75624767ed4f08a1ebc9f655711ba95d ) oc_revision=.61d;;
+############## oc_hashes_strings 29 #################
+75624767ed4f08a1ebc9f655711ba95d ) oc_revision=.61x;;
 58c4b4a88f8c41f84683bdf4afa3e77c ) oc_revision=.6xr;;
-bb901639773a1c319a3ff804128bdfb4 ) oc_revision=.60d;;
-58c4b4a88f8c41f84683bdf4afa3e77c ) oc_revision=.60r;;
-01dfbdd3175793d729999c52882dd3b6 ) oc_revision=.59r;;
-efbad161ffbf7a17374d08ec924651fe ) oc_revision=.59d;;
-d90190bfea64112ed83621079371277a ) oc_revision=.58d;;
-9ff8a0c61dc1332dd58ecc311e0938b0 ) oc_revision=.57d;;
+bb901639773a1c319a3ff804128bdfb4 ) oc_revision=.60x;;
+01dfbdd3175793d729999c52882dd3b6 ) oc_revision=.59x;;
+efbad161ffbf7a17374d08ec924651fe ) oc_revision=.59x;;
+d90190bfea64112ed83621079371277a ) oc_revision=.58x;;
+9ff8a0c61dc1332dd58ecc311e0938b0 ) oc_revision=.57x;;
 10610877a9cc0ed958ff74ed7a192474 ) oc_revision=.5xr;;
-12e5d34064fed06441b86b21f3fa3b7d ) oc_revision=.56r;;
-9004a000df355d09a79ba510c055a5f0 ) oc_revision=.56d;;
-f3b1534643d3eb11fc18ac5a56528d79 ) oc_revision=.55r;;
-07b64c16f48d61e5e9f2364467250912 ) oc_revision=.55d;;
-91e8abcf647af737d4a22fe3f98d00c0 ) oc_revision=.54r;;
-5758e9b672486b863b18f6e5ff001b27 ) oc_revision=.54d;;
-97f744526c733aa2e6505f01f37de6d7 ) oc_revision=.53r;;
-b09cd76fadd2f7a14e76003b2ff4016f ) oc_revision=.53d;;
-1ca142bf009ed537d84c980196c36d72 ) oc_revision=.52r;;
-eaba9d5b467da41f5a872630d4ad7ff5 ) oc_revision=.52d;;
-eb66a8a986762b9cadecb6408ecb1ec7 ) oc_revision=.51r;;
-c31035549f86156ff5e79b9d87240ec5 ) oc_revision=.51d;;
-7844acab1d74aeccc5d2696627c1ed3d ) oc_revision=.50r;;
-c221f59769bd185857b2c30858fe3aa2 ) oc_revision=.50d;;
+12e5d34064fed06441b86b21f3fa3b7d ) oc_revision=.56x;;
+9004a000df355d09a79ba510c055a5f0 ) oc_revision=.56x;;
+f3b1534643d3eb11fc18ac5a56528d79 ) oc_revision=.55x;;
+07b64c16f48d61e5e9f2364467250912 ) oc_revision=.55x;;
+91e8abcf647af737d4a22fe3f98d00c0 ) oc_revision=.54x;;
+5758e9b672486b863b18f6e5ff001b27 ) oc_revision=.54x;;
+97f744526c733aa2e6505f01f37de6d7 ) oc_revision=.53x;;
+b09cd76fadd2f7a14e76003b2ff4016f ) oc_revision=.53x;;
+1ca142bf009ed537d84c980196c36d72 ) oc_revision=.52x;;
+eaba9d5b467da41f5a872630d4ad7ff5 ) oc_revision=.52x;;
+eb66a8a986762b9cadecb6408ecb1ec7 ) oc_revision=.51x;;
+c31035549f86156ff5e79b9d87240ec5 ) oc_revision=.51x;;
+7844acab1d74aeccc5d2696627c1ed3d ) oc_revision=.50x;;
+c221f59769bd185857b2c30858fe3aa2 ) oc_revision=.50x;;
 91ea6c185c31a25c791da956c79808f9 ) oc_revision=.04r;;
 5bb02432d1d1272fdcdff91fcf33d75b ) oc_revision=.04d;;
 303a7f1391743e6bc52a38d614b5dd93 ) oc_revision=.03r;;
@@ -740,34 +752,34 @@ fi
 }
 
 GET_CONFIG_VERS(){
+if [[ ! ${md5_loader} = "" ]]; then
 
-target=$1
+    target=$1
 
-if [[ ${target} = "OpenCore" ]] || [[ ${target} = "ALL" ]]; then 
+    if [[ ${target} = "OpenCore" ]] || [[ ${target} = "ALL" ]]; then 
 
-    if [[ ! ${#ocr_list[@]} = 0 ]]; then oc_revision=$( echo "${ocr_list[@]}" | egrep -o "${md5_loader}=[.0-9]{3}[rd]" | cut -f2 -d= ); fi
+        if [[ ! ${#ocr_list[@]} = 0 ]]; then oc_revision=$( echo "${ocr_list[@]}" | egrep -o "${md5_loader}=[.0-9]{3}[rd]" | cut -f2 -d= ); fi
  
-    if [[ ${oc_revision} = "" ]]; then 
-    if [[ ! ${#ocd_list[@]} = 0 ]]; then oc_revision=$( echo "${ocd_list[@]}" | egrep -o "${md5_loader}=[.0-9]{3}[®ðn∂]" | cut -f2 -d= ); fi
+        if [[ ${oc_revision} = "" ]]; then 
+        if [[ ! ${#ocd_list[@]} = 0 ]]; then oc_revision=$( echo "${ocd_list[@]}" | egrep -o "${md5_loader}=[.0-9]{3}[®ðn∂]" | cut -f2 -d= ); fi
+        fi
     fi
 
-fi
+    if [[ ${target} = "ALL" ]] &amp;&amp; [[ ! ${oc_revision} = "" ]]; then loader="OpenCore"; loader+="${oc_revision}"
 
-if [[ ${target} = "ALL" ]] &amp;&amp; [[ ! ${oc_revision} = "" ]]; then loader="OpenCore"; loader+="${oc_revision}"
+    else
 
-else
+        if [[ ${target} = "Clover" ]] || [[ ${target} = "ALL" ]]  ; then 
 
-    if [[ ${target} = "Clover" ]] || [[ ${target} = "ALL" ]]  ; then 
-
-    revision=""
-    if [[ ! ${#clv_list[@]} = 0 ]]; then revision=$( echo "${clv_list[@]}" | egrep -o "${md5_loader}=[0-9]{4}" | cut -f2 -d= ); fi
+        revision=""
+        if [[ ! ${#clv_list[@]} = 0 ]]; then revision=$( echo "${clv_list[@]}" | egrep -o "${md5_loader}=[0-9]{4}" | cut -f2 -d= ); fi
 
 
-    if [[ ${target} = "ALL" ]] &amp;&amp; [[ ! ${revision} = "" ]]; then loader="Clover"; loader+="${revision}"; fi
+        if [[ ${target} = "ALL" ]] &amp;&amp; [[ ! ${revision} = "" ]]; then loader="Clover"; loader+="${revision}"; fi
 
+        fi
     fi
 fi
-
 }
 
 GET_CONFIG_HASHES(){
@@ -788,7 +800,7 @@ if [[ ! ${#oth_list[@]} = 0 ]]; then
 }
 
 GET_LOADER_STRING(){
-                
+         
                GET_OTHER_LOADERS_STRING
                
                if [[ ! "${loader:0:5}" = "Other" ]]; then
@@ -802,7 +814,7 @@ GET_LOADER_STRING(){
                                 loader+="${revision:0:4}"
                                 ;;
   
-                    "OpenCore"  ) GET_OC_VERS; loader="OpenCore"; loader+="${oc_revision}"
+                    "OpenCore"  ) GET_OC_VERS; loader="OpenCore"; loader+="${oc_revision}"; if [[ ! ${loader_sum} = 0 ]]; then oc_list[pnum]=$( md5 -qq "$vname"/EFI/OC/OpenCore.efi ); fi
                         ;;
                     "GNU/Linux" ) loader="GNU/Linux"                                       
                         ;;
@@ -832,8 +844,8 @@ FIND_LOADERS(){
 
 vname=`df | egrep ${string} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
 
-			if  [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]] &amp;&amp; [[ -f "$vname"/EFI/BOOT/bootx64.efi ]] &amp;&amp; [[ -f "$vname"/EFI/BOOT/BOOTx64.efi ]]; then 
-                md5_loader=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi )                 
+			if  [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]] &amp;&amp; [[ -f "$vname"/EFI/BOOT/bootx64.efi ]] &amp;&amp; [[ -f "$vname"/EFI/BOOT/BOOTx64.efi ]]; then  
+                md5_loader=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi )     
                 if [[ ${md5_loader} = "" ]]; then loader=""; else
                    if [[ ${mounted_loaders_list[$pnum]} = ${md5_loader} ]]; then loader=""; else
                     SHIFT_UP
@@ -882,33 +894,33 @@ while [[ $var0 != 0 ]]; do
     CHECK_USB
 
 
-    if [[ ! $CheckLoaders = 0 ]]; then FIND_LOADERS 
-        if [[ ! ${loader} = "" ]];then
+        if [[ ! $CheckLoaders = 0 ]]; then FIND_LOADERS 
+           if [[ ! ${loader} = "" ]];then
             if [[ ! ${lddlist[pnum]} = "" ]]; then
                      max=0; for y in ${!lddlist[@]}; do if [[ ${max} -lt ${y} ]]; then max=${y}; fi; done
                      for ((y=$((max+1));y&gt;pnum;y--)); do lddlist[y]=${lddlist[((y-1))]}; ldlist[y]=${ldlist[((y-1))]}; done
             fi
-             ldlist[pnum]=$loader; lddlist[pnum]=${dlist[pnum]}
+             ldlist[pnum]="$loader"; lddlist[pnum]=${dlist[pnum]}
         fi
- 
+
                                 lname=""
-                                if [[ ${ldlist[pnum]:0:6} = "Clover" ]]; then
-                                lname="Clover"; if [[ ! "${ldlist[pnum]:6:10}" = "" ]]; then lname+=" "${ldlist[pnum]:6:10}; fi
-                                elif [[ ${ldlist[pnum]:0:12} = "unrecognized" ]]; then                 
+                                if [[ "${ldlist[pnum]:0:6}" = "Clover" ]]; then
+                                lname="Clover"; if [[ ! "${ldlist[pnum]:6:10}" = "" ]]; then lname+=" ${ldlist[pnum]:6:10}"; fi
+                                elif [[ "${ldlist[pnum]:0:12}" = "unrecognized" ]]; then                 
                                      if [[ $loc = "ru" ]]; then lname="Не распознан"; else lname="Unrecognized"; fi
-                                elif [[ ${ldlist[pnum]:0:5} = "Other" ]]; then
+                                elif [[ "${ldlist[pnum]:0:5}" = "Other" ]]; then
                                      lname="${ldlist[pnum]:5}"                                   
-                                elif [[ ${ldlist[pnum]:0:9} = "GNU/Linux" ]]; then
+                                elif [[ "${ldlist[pnum]:0:9}" = "GNU/Linux" ]]; then
                                      lname="GNU/Linux"
-                                elif [[ ${ldlist[pnum]:0:6} = "refind" ]]; then
+                                elif [[ "${ldlist[pnum]:0:6}" = "refind" ]]; then
                                      lname="rEFInd"
-                                elif [[ ${ldlist[pnum]:0:7} = "Windows" ]]; then
+                                elif [[ "${ldlist[pnum]:0:7}" = "Windows" ]]; then
                                      lname="Windows MS"
-                                elif [[ ${ldlist[pnum]:0:8} = "OpenCore" ]]; then
-                                lname="OpenCore"; if [[ ! "${ldlist[pnum]:8:13}" = "" ]]; then lname+=" "${ldlist[pnum]:8:13}; fi
+                                elif [[ "${ldlist[pnum]:0:8}" = "OpenCore" ]]; then
+                                lname="OpenCore"; if [[ ! "${ldlist[pnum]:8:13}" = "" ]]; then lname+=" ${ldlist[pnum]:8:13}"; fi
                                 fi
                                 
-                                if [[ ! ${lname} = "" ]]; then ldname=1; lname1="-  "; lname1+="${lname}"; lname="${lname1}"; fi 
+                                if [[ ! "${lname}" = "" ]]; then ldname=1; lname1="-  "; lname1+="${lname}"; lname="${lname1}"; fi 
                                 
     fi
 
@@ -1292,11 +1304,11 @@ if [[ $hotplug = 0 ]]; then synchro=0
         mounted_check=$( df | grep ${dlist[$pnum]} )   
             if [[ ! $mounted_check = "" ]]; then 
             vname=`df | egrep ${dlist[$pnum]} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
-                    if ! loader_sum=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi 2&gt;/dev/null); then loader_sum=0; fi
-
-                    if [[ ! ${mounted_loaders_list[$pnum]} = ${loader_sum} ]]; then hotplug=1; echo "1" &gt; ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag; break; fi
+                    if ! loader_sum=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi 2&gt;/dev/null); then loader_sum=0 ; fi
+                    if [[ ! ${mounted_loaders_list[$pnum]} = ${loader_sum} ]] || ( [[ $( xxd "$vname"/EFI/BOOT/BOOTX64.EFI | egrep -om1 "OpenCore" ) = "OpenCore" ]] &amp;&amp; [[ ! ${oc_list[pnum]} = $( md5 -qq "$vname"/EFI/OC/OpenCore.efi ) ]]  ); then
+                     hotplug=1; echo "1" &gt; ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag; break; fi
             fi
-        done
+        done        
     fi
 fi
 
@@ -1425,27 +1437,28 @@ exit
 }
 
 RECHECK_LOADERS(){
-if [[ ! $CheckLoaders = 0 ]]; then
+if [[ ! $CheckLoaders = 0 ]] &amp;&amp; [[ -f ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag ]]; then
 		update_screen_flag=0
         for pnum in ${!dlist[@]}
         do
         mounted_check=$( df | grep ${dlist[$pnum]} )   
             if [[ ! $mounted_check = "" ]]; then 
             vname=`df | egrep ${dlist[$pnum]} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
-                    if ! loader_sum=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi 2&gt;/dev/null); then loader_sum=0; fi
-
-                    if [[ ${loader_sum} = "10610877a9cc0ed958ff74ed7a192474" ]]; then md5_loader=${loader_sum}; CORRECT_OC_VERS
-                        elif [[ ${loader_sum} = "58c4b4a88f8c41f84683bdf4afa3e77c" ]]; then md5_loader=${loader_sum}; CORRECT_OC_VERS_1
-                       if [[ ! ${old_oc_revision} = ${oc_revision} ]]; then old_oc_revision=${oc_revision}; update_screen_flag=1; else update_screen_flag=0; fi
+                    if ! loader_sum=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi ); then loader_sum=0; fi
+                    if [[ ! ${loader_sum} = 0 ]] &amp;&amp; ( [[ $( xxd "$vname"/EFI/BOOT/BOOTX64.EFI | egrep -om1 "OpenCore" ) = "OpenCore" ]] &amp;&amp; [[ ! ${oc_list[pnum]} = $( md5 -qq "$vname"/EFI/OC/OpenCore.efi ) ]] ); then 
+                            oc_list[pnum]=$( md5 -qq "$vname"/EFI/OC/OpenCore.efi )
+                            md5_loader=${loader_sum}; GET_OC_VERS; update_screen_flag=1
                     fi
 
                     if [[ ! ${mounted_loaders_list[$pnum]} = ${loader_sum} ]] || [[ ${update_screen_flag} = 1 ]]; then 
                     mounted_loaders_list[$pnum]=${loader_sum}
                     if [[ ${loader_sum} = 0 ]]; then loader="empty"; else md5_loader=${loader_sum}; loader=""; oc_revision=""; revision=""; GET_LOADER_STRING; fi
-                    ldlist[pnum]=$loader; lddlist[pnum]=${dlist[$pnum]}
-                    let "chs=pnum+1"; if [[ "${recheckLDs}" = "1" ]]; then recheckLDs=2; fi; hotplug=1; break; fi
+                    ldlist[pnum]="$loader"; lddlist[pnum]=${dlist[$pnum]}
+                    let "chs=pnum+1"; if [[ "${recheckLDs}" = "1" ]]; then recheckLDs=2; fi; hotplug=1; fi
             fi
         done
+
+        rm -f ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag
 fi
 }
 
@@ -1525,6 +1538,7 @@ if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
 while true; do
 #################### MAIN MENU #####################
+
 START_CHECK_HOTPLUG &amp;
 hotplug_pid=$!
 result_names=$( ASK_LIST )
@@ -1532,10 +1546,7 @@ if [[ -f ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag ]]; then
 	hotplug_flag=1; msgpid=$(cat ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag)
 	rm -f ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag 
 	if [[ ! ${msgpid} = "" ]]; then kill ${msgpid}; fi
-	if [[ -f ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag ]]; then
 		RECHECK_LOADERS
-		rm -f ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag
-	fi
 fi
 kill ${hotplug_pid}
 
