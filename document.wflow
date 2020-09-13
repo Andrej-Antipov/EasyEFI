@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 09.09.2020.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 14.09.2020.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyESP #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="014"
+edit_vers="015"
 ##################################################################################################################################################################################################################
 
 RESTART_APP(){
@@ -296,6 +296,20 @@ sleep 0.7
 osascript -e 'display dialog '"${MESSAGE}"' '"${icon_string}"' buttons { "OK"}' &gt;&gt;/dev/null 2&gt;/dev/null
 }
 
+CHANGE_PSW(){
+zx=Mac-$(ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/' | cut -f2 -d"=" | tr -d '" ' | cut -f2-4 -d '-' | tr -d - | rev)
+
+efimounter=$(echo 0x7a 0x78 | xxd -r)
+
+if (security find-generic-password -a ${USER} -s efimounter -w); then
+    mypassword=$(security find-generic-password -a ${USER} -s efimounter -w)
+    security delete-generic-password -a ${USER} -s efimounter 
+    security add-generic-password -a ${USER} -s ${!efimounter} -w "${mypassword}" 
+fi
+}
+
+
+
 ################ запрос пароля sudo #################################
 PROMT_SUDO_PASSWORD(){
 
@@ -346,9 +360,9 @@ ENTER_PASSWORD(){
 
 SET_INPUT
 
-if (security find-generic-password -a ${USER} -s efimounter -w) &gt;/dev/null 2&gt;&amp;1; then
+if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
                 if [[ "$1" = "force" ]]; then
-                security delete-generic-password -a ${USER} -s efimounter &gt;/dev/null 2&gt;&amp;1
+                security delete-generic-password -a ${USER} -s ${!efimounter} &gt;/dev/null 2&gt;&amp;1
                 if [[ $loc = "ru" ]]; then
                 MESSAGE='"СТАРЫЙ ПАРОЛЬ УДАЛЁН ИЗ СВЯЗКИ КЛЮЧЕЙ!"'
                 else
@@ -360,17 +374,17 @@ fi
 
 PROMT_SUDO_PASSWORD
 if [[ ${mypassword} = "" ]]; then ERROR_NO_PASSWORD; else
-    if (security find-generic-password -a ${USER} -s efimounter -w) &gt;/dev/null 2&gt;&amp;1; then
-        security delete-generic-password -a ${USER} -s efimounter &gt;/dev/null 2&gt;&amp;1
+    if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
+        security delete-generic-password -a ${USER} -s ${!efimounter} &gt;/dev/null 2&gt;&amp;1
     fi
-        security add-generic-password -a ${USER} -s efimounter -w "${mypassword}" &gt;/dev/null 2&gt;&amp;1
+        security add-generic-password -a ${USER} -s ${!efimounter} -w "${mypassword}" &gt;/dev/null 2&gt;&amp;1
 fi
 }
 
 GET_PASSWORD(){
 mypassword=""
-if (security find-generic-password -a ${USER} -s efimounter -w) &gt;/dev/null 2&gt;&amp;1; then
-mypassword=$(security find-generic-password -a ${USER} -s efimounter -w 2&gt;/dev/null); fi
+if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
+mypassword=$(security find-generic-password -a ${USER} -s ${!efimounter} -w 2&gt;/dev/null); fi
 }
 
 NEED_PASSWORD(){
@@ -1511,6 +1525,7 @@ if [[ $(echo "$EasyEFIconf"  | grep -A 1 -e "EasyEFIsimple&lt;/key&gt;" | grep -
 fi
 
 UPDATE_CACHE
+CHANGE_PSW
 GET_CONFIG_HASHES
 GET_LOCALE 
 GET_APP_ICON
