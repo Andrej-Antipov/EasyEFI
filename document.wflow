@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>AMApplicationBuild</key>
-	<string>492</string>
+	<string>444.42</string>
 	<key>AMApplicationVersion</key>
-	<string>2.10</string>
+	<string>2.9</string>
 	<key>AMDocumentVersion</key>
 	<string>2</string>
 	<key>actions</key>
@@ -66,67 +66,23 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 14.09.2020.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 21.09.2020.#  Copyright © 2020 gosvamih. All rights reserved.
 
-############################################################################## EasyESP #########################################################################################################################
+############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
 edit_vers="015"
 ##################################################################################################################################################################################################################
-
-RESTART_APP(){
-
-if [[ ! -d ~/Library/Application\ Support/EasyEFIsupport ]]; then mkdir -p ~/Library/Application\ Support/EasyEFIsupport; fi
-EASYEFI_SUPPORT=$( echo "/Users/'$(whoami)'/Library/Application\ Support/EasyEFIsupport/EasyEFIr.plist" | xargs)
-EASYEFI_SUPPORT_SH=$( echo "/Users/'$(whoami)'/Library/Application\ Support/EasyEFIsupport/EasyEFIr.sh" | xargs)
-
-ESYEFI_PATH="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | sed 's/.$//' | sed 's/[^/]*$//' | sed 's/.$//' | sed 's/[^/]*$//' | sed 's/.$//' | xargs)"
-
-echo '&lt;?xml version="1.0" encoding="UTF-8"?&gt;' &gt; "${EASYEFI_SUPPORT}"
-echo '&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '&lt;plist version="1.0"&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '&lt;dict&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;key&gt;Label&lt;/key&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;string&gt;EasyEFIr.job&lt;/string&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;key&gt;Nicer&lt;/key&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;integer&gt;1&lt;/integer&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;key&gt;ProgramArguments&lt;/key&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;array&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '      &lt;string&gt;/Users/'"$(whoami)"'/Library/Application Support/EasyEFIsupport/EasyEFIr.sh&lt;/string&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;/array&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;key&gt;RunAtLoad&lt;/key&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '  &lt;true/&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '&lt;/dict&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-echo '&lt;/plist&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"
-
-echo '#!/bin/bash'  &gt; "${EASYEFI_SUPPORT_SH}"
-echo ''             &gt;&gt; "${EASYEFI_SUPPORT_SH}"
-echo 'sleep 1'             &gt;&gt; "${EASYEFI_SUPPORT_SH}"
-echo 'ProgPath=''"'$(echo "$ESYEFI_PATH")'"''' &gt;&gt; "${EASYEFI_SUPPORT_SH}"
-echo 'i=60; while [[ ! $i = 0 ]]; do' &gt;&gt; "${EASYEFI_SUPPORT_SH}"
-echo 'if [[ ! $(ps xao command | grep -i "EasyEFI.app" | grep -v grep | wc -l | bc) = 0 ]]; then' &gt;&gt; "${EASYEFI_SUPPORT_SH}"
-echo 'i=$((i-1)); sleep 0.25; else break; fi; done' &gt;&gt; "${EASYEFI_SUPPORT_SH}"
-echo '            open "${ProgPath}"'  &gt;&gt; "${EASYEFI_SUPPORT_SH}"
-echo 'exit'             &gt;&gt; "${EASYEFI_SUPPORT_SH}"
-
-chmod u+x "${EASYEFI_SUPPORT_SH}"
-
-if [[ -f "${EASYEFI_SUPPORT_SH}" ]]; then mv -f "${EASYEFI_SUPPORT}" ~/Library/LaunchAgents/EasyEFIr.plist; fi
-if [[ ! $(launchctl list | grep "EasyEFIr.job" | cut -f3 | grep -x "EasyEFIr.job") ]]; then launchctl load -w ~/Library/LaunchAgents/EasyEFIr.plist; fi
-}
-
-CHECK_RESTART_APP_CLEAN(){
-if [[ $(launchctl list | grep "EasyEFIr.job" | cut -f3 | grep -x "EasyEFIr.job") ]]; then launchctl unload -w ~/Library/LaunchAgents/EasyEFIr.plist
-rm -f ~/Library/LaunchAgents/EasyEFIr.plist
-rm -f ~/Library/Application\ Support/EasyEFIsupport/EasyEFIr.sh
-fi
-}
 
 CHECK_CLEAN_AUTOUPDATE(){
 if [[ $(launchctl list | grep "EasyEFIu.job" | cut -f3 | grep -x "EasyEFIu.job") ]]; then launchctl unload -w ~/Library/LaunchAgents/EasyEFIu.plist
 rm -f ~/Library/LaunchAgents/EasyEFIu.plist
 rm -f ~/Library/Application\ Support/EasyEFIsupport/EasyEFIu.sh
+    if [[ -f ~/Library/Application\ Support/EasyEFIsupport/UpdatedInfo.txt ]]; then UpdateInfo=$(cat ~/Library/Application\ Support/EasyEFIsupport/UpdatedInfo.txt)
+    MSG_UPDATED &amp;
+    mspid2=$(($!+2))
+    rm -f ~/Library/Application\ Support/EasyEFIsupport/UpdatedInfo.txt
+    fi
 fi
-
 }
 
 START_AUTOUPDATE(){
@@ -216,6 +172,7 @@ echo '        mv -f ~/.EasyEFIupdates/document.wflow "${ProgPath}" ; rm -Rf ~/.E
 echo '        plutil -replace CFBundleShortVersionString -string "$vers" "${ProgPath}"/Info.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        plutil -replace NSHumanReadableCopyright -string "Copyright © 2020 gosvamih. All rights reserved." "${ProgPath}"/Info.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        touch  "${ProgPath}"/../.' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh 
+echo '        echo "$vers" >> ~/Library/Application\ Support/EasyEFIsupport/UpdatedInfo.txt' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        plutil -replace ReadyToAutoUpdate -bool No ~/Library/Application\ Support/EasyEFIsupport/EasyEFIconf.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo ''  &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'fi' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
@@ -280,7 +237,9 @@ if [[ $loc = "ru" ]]; then error_message='"Mac OS '$(sw_vers -productVersion)' �
 }
 
 DISPLAY_NOTIFICATION(){
-osascript -e 'display dialog '"${MESSAGE}"'  '"${icon_string}"'  buttons { "OK"}  giving up after 3' &gt;/dev/null 2&gt;/dev/null
+if [[ $TIMER = "" ]]; then TIMER=3; fi 
+osascript -e 'display dialog '"${MESSAGE}"'  '"${icon_string}"'  buttons { "OK"}  giving up after '"$TIMER"'' &gt;/dev/null 2&gt;/dev/null
+unset TIMER
 }
 
 ERROR_NO_PASSWORD(){
@@ -294,6 +253,27 @@ fi
 MESSAGE_SEARCH(){
 sleep 0.7
 osascript -e 'display dialog '"${MESSAGE}"' '"${icon_string}"' buttons { "OK"}' &gt;&gt;/dev/null 2&gt;/dev/null
+}
+
+MESSAGE_REMOVED(){
+if [[ $loc = "ru" ]]; then MESSAGE='"Ваш пароль удалён из связки ключей !"'; else MESSAGE='"Your password removed from keychain !"'; fi
+DISPLAY_NOTIFICATION
+}
+
+MESSAGE_STORED(){
+if [[ $loc = "ru" ]]; then MESSAGE='"Ваш пароль сохранён в связке ключей !"'; else MESSAGE='"Your password saved in keychain !"'; fi
+DISPLAY_NOTIFICATION
+}
+
+MESSAGE_FAILED(){
+old_mode=${menu_mode}; menu_mode=1
+if [[ $loc = "ru" ]]; then error_message='"Неверный пароль сброшен !"'; else error_message='"Wrong paswword rejected !"'; fi
+ERROR_MSG; menu_mode=${old_mode}
+}
+
+MSG_UPDATED(){
+if [[ $loc = "ru" ]]; then MESSAGE='"Обновление выполнено !\nВерсия: '"${UpdateInfo::5}"' редакция: '"${UpdateInfo:6:8}"' "'; else MESSAGE='"Update completed !\nVersion: '"${UpdateInfo::5}"' edition: '"${UpdateInfo:6:8}"' "'; fi
+DISPLAY_NOTIFICATION
 }
 
 CHANGE_PSW(){
@@ -330,13 +310,18 @@ fi
 mypassword=""        
         TRY=3
         while [[ ! $TRY = 0 ]]; do
+        while true; do
         if [[ $loc = "ru" ]]; then
-        if mypassword="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nОн будет храниться в вашей связке ключей\n\nПользователь:  '"$(id -F)"'\nВведите ваш пароль:" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""' -e 'text returned of result')"; then cansel=0; else cansel=1; fi 2&gt;/dev/null
+        PASS_ANSWER="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nВы можете выбрать его хранение в связке ключей\n\nПользователь:  '"$(id -F)"'\nВведите ваш пароль:" buttons {"OK", "Сохранить в связке", "Отмена"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
         else
-        if mypassword="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nIt will be keeped in your keychain\n\nUser Name:  '"$(id -F)"'\nEnter your password:" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""' -e 'text returned of result')"; then cansel=0; else cansel=1; fi 2&gt;/dev/null
-        fi    
-                if [[ $cansel = 1 ]] || [[ "${mypassword}" = "" ]]; then break; fi  
-                if echo "${mypassword}" | sudo -Sk printf '' 2&gt;/dev/null; then  break
+        PASS_ANSWER="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nYou can choose to store the password in the keychain\n\nUser Name:  '"$(id -F)"'\nEnter your password:" buttons {"OK", "Store in keychain", "Cancel"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
+        fi 
+        if [[ $(echo "${PASS_ANSWER}" | egrep -o "gave up:.*" | cut -f2 -d:) = "false" ]]; then break; fi
+        done  
+                pressed_button=$(echo "${PASS_ANSWER}" | egrep -o "button returned:OK,|Cancel,|Store in keychain,|Отмена,|Сохранить в связке," | tr -d ',' | cut -f2 -d:)
+                mypassword=$(echo "${PASS_ANSWER}" | egrep -o "text returned:.*," | tr -d ',' | cut -f2 -d:)
+                if [[ "$pressed_button" = "Отмена" || "$pressed_button" = "Cancel" || "${mypassword}" = "" ]]; then cansel=1; break; else cansel=0; fi
+                if echo "${mypassword}" | sudo -S printf '' 2&gt;/dev/null; then  break
                 else
                         mypassword=""
                         let "TRY--"
@@ -373,27 +358,50 @@ if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/nul
 fi
 
 PROMT_SUDO_PASSWORD
-if [[ ${mypassword} = "" ]]; then ERROR_NO_PASSWORD; else
-    if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
-        security delete-generic-password -a ${USER} -s ${!efimounter} &gt;/dev/null 2&gt;&amp;1
+if [[ ! ${mypassword} = "" ]]; then
+    if [[ ! "$pressed_button" = "OK" ]]; then 
+            if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
+            security delete-generic-password -a ${USER} -s ${!efimounter} &gt;/dev/null 2&gt;&amp;1
+            fi
+            security add-generic-password -a ${USER} -s ${!efimounter} -w "${mypassword}" &gt;/dev/null 2&gt;&amp;1
     fi
-        security add-generic-password -a ${USER} -s ${!efimounter} -w "${mypassword}" &gt;/dev/null 2&gt;&amp;1
+else
+    ERROR_NO_PASSWORD
 fi
 }
 
 GET_PASSWORD(){
-mypassword=""
 if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
 mypassword=$(security find-generic-password -a ${USER} -s ${!efimounter} -w 2&gt;/dev/null); fi
 }
 
 NEED_PASSWORD(){
 need_password=0
-if [[ ! $flag = 0 ]] || [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then 
+if [[ ! $flag = 0 ]] || [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then  
               GET_PASSWORD
-        if ! echo "${mypassword}" | sudo -Sk printf "" 2&gt;/dev/null; then ENTER_PASSWORD "force"
+        if ! echo "${mypassword}" | sudo -S printf "" 2&gt;/dev/null; then ENTER_PASSWORD "force"
            if [[ $mypassword = "" ]]; then need_password=1; fi
         fi
+fi
+}
+
+REMOVE_PASSWORD(){
+if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
+        security delete-generic-password -a ${USER} -s ${!efimounter} &gt;/dev/null 2&gt;&amp;1
+        TIMER=2; MESSAGE_REMOVED
+fi
+}
+
+STORE_PASSWORD(){
+if echo "${mypassword}" | sudo -S printf '' 2&gt;/dev/null; then
+    if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
+        security delete-generic-password -a ${USER} -s ${!efimounter} &gt;/dev/null 2&gt;&amp;1
+    fi
+        security add-generic-password -a ${USER} -s ${!efimounter} -w "${mypassword}" &gt;/dev/null 2&gt;&amp;1
+        TIMER=2; MESSAGE_STORED
+else
+    mypassword=""
+    MESSAGE_FAILED
 fi
 }
 
@@ -996,6 +1004,7 @@ UPDATE_SCREEN
 
 
 ASK_LIST(){
+pass=$(security find-generic-password -a ${USER} -s ${!efimounter} -w 2&gt;/dev/null)
 if [[ ${ldname} = 1 ]]; then 
 efi_prompt_list='"*********************************************************************************************"'","
 else
@@ -1011,6 +1020,11 @@ efi_prompt_list+='"'"************************************ дополнитель
         efi_prompt_list+='"                                  Найти и подключить разделы с OpenCore  "'","
         efi_prompt_list+='"                                  Найти и подключить разделы с Clover  "'","
         efi_prompt_list+='"                                  Проверить все BOOTx64.efi в разделах EFI  "'","
+        if [[ ! $pass = "" ]]; then
+        efi_prompt_list+='"                                  Удалить свой пароль из связки ключей  "'","
+        elif [[ ! "$mypassword" = "" ]]; then
+        efi_prompt_list+='"                                  Cохранить свой пароль в связке ключей  "'","
+        fi
         efi_prompt_list+='"                                  Включить упрощённый режим управления  "'
     else
         efi_prompt_list+='"                                  Включить расширенный режим управления  "'
@@ -1022,6 +1036,11 @@ efi_prompt_list+='"'"************************************** additionally: ******
         efi_prompt_list+='"                                       Find and mount EFI partitions with OpenCore  "'","
         efi_prompt_list+='"                                       Find and mount EFI partitions with Clover  "'","
         efi_prompt_list+='"                                       Searching all BOOTx64.efi in EFI partitions "'","
+        if [[ ! $pass = "" ]]; then
+        efi_prompt_list+='"                                       Remove your password from keychain  "'","
+        elif [[ ! "$mypassword" = "" ]]; then
+        efi_prompt_list+='"                                       Save your password in keychain  "'","
+        fi
         efi_prompt_list+='"                                       Switch menu to simple management mode "'
     else
         efi_prompt_list+='"                                       Switch menu to advanced management mode "'
@@ -1036,6 +1055,11 @@ efi_prompt_list+='"'"******************************* дополнительно:
             efi_prompt_list+='"                          Найти и подключить разделы с OpenCore  "'","
             efi_prompt_list+='"                          Найти и подключить разделы с Clover  "'","
             efi_prompt_list+='"                          Проверить все BOOTx64.efi в разделах EFI  "'","
+            if [[ ! $pass = "" ]]; then
+            efi_prompt_list+='"                          Удалить свой пароль из связки ключей  "'","
+            elif [[ ! "$mypassword" = "" ]]; then
+            efi_prompt_list+='"                          Cохранить свой пароль в связке ключей  "'","
+            fi
             efi_prompt_list+='"                          Включить упрощённый режим управления  "'
         else
             efi_prompt_list+='"                          Включить расширенный режим управления  "'
@@ -1047,6 +1071,11 @@ efi_prompt_list+='"'"********************************* additionally: ***********
             efi_prompt_list+='"                                Find and mount EFI partitions with OpenCore  "'","
             efi_prompt_list+='"                                Find and mount EFI partitions with Clover  "'","
             efi_prompt_list+='"                                Searching all BOOTx64.efi in EFI partitions "'","
+        if [[ ! $pass = "" ]]; then
+            efi_prompt_list+='"                                Remove your password from keychain  "'","
+        elif [[ ! "$mypassword" = "" ]]; then
+        efi_prompt_list+='"                                    Save your password in keychain  "'","
+        fi
             efi_prompt_list+='"                                Switch menu to simple management mode "'
         else
             efi_prompt_list+='"                                Switch menu to advanced management mode "'
@@ -1485,7 +1514,7 @@ if [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then
              echo "${mypassword}" | sudo -S chown -R root:wheel ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
              sudo chmod -R 755 ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
 	         sudo kextutil ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext; sudo kextutil ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
-  	         echo "${mypassword}" | sudo -Sk rm -Rf ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
+  	         echo "${mypassword}" | sudo -S rm -Rf ~/Library/Application\ Support/EasyEFIsupport/msdosfs.kext
         fi
     fi
 fi
@@ -1529,15 +1558,14 @@ CHANGE_PSW
 GET_CONFIG_HASHES
 GET_LOCALE 
 GET_APP_ICON
-CHECK_RESTART_APP_CLEAN &amp;
-CHECK_CLEAN_AUTOUPDATE &amp;
+CHECK_CLEAN_AUTOUPDATE 
 CHECK_START_UPDATE
 
 hotplug_flag=0
 
 ############################################################################################
 #################################### MAIN ##################################################
-
+if [[ ! $mspid2 = "" ]]; then sleep 2; fi
 if [[ $loc = "ru" ]]; then
 MESSAGE='"Поиск EFI разделов .... !"'
 else
@@ -1546,6 +1574,7 @@ fi
 MESSAGE_SEARCH &amp;
 mspid=$(($!+2))
 sleep 0.5
+if [[ ! $mspid2 = "" ]]; then kill $mspid2; fi
 GETARR
 GETLIST
 kill $mspid
@@ -1593,6 +1622,12 @@ if [[ ${modename} = "" ]]; then
     if [[ ! ${unmount} = "" ]]; then
         UNMOUNTS    
     fi
+
+    pswrd=$(echo "${result_names}" | egrep -o "Удалить свой пароль из связки ключей|Remove your password from keychain")
+        if [[ ! "${pswrd}" = "" ]]; then REMOVE_PASSWORD; unset pswrd; fi
+
+    pswrd=$(echo "${result_names}" | egrep -o "Cохранить свой пароль в связке ключей|Save your password in keychain")
+        if [[ ! "${pswrd}" = "" ]]; then STORE_PASSWORD; unset pswrd; fi
 
     disk_mount_list=( $(echo "${result_names}" | egrep -o "disk[0-9]*s[0-9]*") )
     if [[ ! ${#disk_mount_list[@]} = "0" ]]; then 
@@ -1676,9 +1711,9 @@ EXIT_PROGRAM
 					<key>1</key>
 					<dict>
 						<key>default value</key>
-						<false/>
+						<string></string>
 						<key>name</key>
-						<string>CheckedForUserDefaultShell</string>
+						<string>source</string>
 						<key>required</key>
 						<string>0</string>
 						<key>type</key>
@@ -1689,9 +1724,9 @@ EXIT_PROGRAM
 					<key>2</key>
 					<dict>
 						<key>default value</key>
-						<string></string>
+						<false/>
 						<key>name</key>
-						<string>source</string>
+						<string>CheckedForUserDefaultShell</string>
 						<key>required</key>
 						<string>0</string>
 						<key>type</key>
@@ -1729,7 +1764,7 @@ EXIT_PROGRAM
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>639.500000:551.000000</string>
+				<string>632.000000:525.000000</string>
 				<key>nibPath</key>
 				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/Base.lproj/main.nib</string>
 			</dict>
