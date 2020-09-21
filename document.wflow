@@ -244,9 +244,9 @@ unset TIMER
 
 ERROR_NO_PASSWORD(){
 if [[ $loc = "ru" ]]; then
-error_message='"Пароль не получен !\nНе могу подключить EFI раздел"'; ERROR_MSG
+error_message='"Пароль не получен !\nВыполнение прервано !"'; ERROR_MSG
 else
-error_message='"Password not got!\nNCannot mount EFI partition"'; ERROR_MSG
+error_message='"Password not entered !\nExecution aborted !"'; ERROR_MSG
 fi
 }
 
@@ -267,13 +267,25 @@ DISPLAY_NOTIFICATION
 
 MESSAGE_FAILED(){
 old_mode=${menu_mode}; menu_mode=1
-if [[ $loc = "ru" ]]; then error_message='"Неверный пароль сброшен !"'; else error_message='"Wrong paswword rejected !"'; fi
+if [[ $loc = "ru" ]]; then error_message='"Неверный пароль сброшен !"'; else error_message='"Invalid password has been reset !"'; fi
 ERROR_MSG; menu_mode=${old_mode}
 }
+
+#MSG_EXEC_FAILED(){
+#old_mode=${menu_mode}; menu_mode=1
+#if [[ $loc = "ru" ]]; then error_message='"Выполнение прервано !"'; else error_message='"Execution aborted !"'; fi
+#ERROR_MSG; menu_mode=${old_mode}
+#}
 
 MSG_UPDATED(){
 if [[ $loc = "ru" ]]; then MESSAGE='"Обновление выполнено !\nВерсия: '"${UpdateInfo::5}"' редакция: '"${UpdateInfo:6:8}"' "'; else MESSAGE='"Update completed !\nVersion: '"${UpdateInfo::5}"' edition: '"${UpdateInfo:6:8}"' "'; fi
 DISPLAY_NOTIFICATION
+}
+
+MSG_PASSWORD_REMOVED(){
+old_mode=${menu_mode}; menu_mode=1
+if [[ $loc = "ru" ]]; then error_message='"Устаревший пароль удалён из связки ключей !"'; else error_message='"Deprecated password removed from keychain !"'; fi
+ERROR_MSG; menu_mode=${old_mode}
 }
 
 CHANGE_PSW(){
@@ -348,12 +360,7 @@ SET_INPUT
 if (security find-generic-password -a ${USER} -s ${!efimounter} -w) &gt;/dev/null 2&gt;&amp;1; then
                 if [[ "$1" = "force" ]]; then
                 security delete-generic-password -a ${USER} -s ${!efimounter} &gt;/dev/null 2&gt;&amp;1
-                if [[ $loc = "ru" ]]; then
-                MESSAGE='"СТАРЫЙ ПАРОЛЬ УДАЛЁН ИЗ СВЯЗКИ КЛЮЧЕЙ!"'
-                else
-                MESSAGE='"FORMER PASSWORD REMOVED FROM KEYCHAIN!"'
-                fi
-                DISPLAY_NOTIFICATION
+                MSG_PASSWORD_REMOVED
                 fi
 fi
 
@@ -645,6 +652,15 @@ if ! echo "${mypassword}" | sudo -S printf "" 2&gt;/dev/null; then
             need_password=1
        fi
 fi
+}
+
+IF_MOUNT_ALL(){
+for string in ${disk_mount_list[@]}; do
+        mcheck=`df | grep ${string}`; if [[ ! $mcheck = "" ]]; then mcheck="Yes"; fi 
+        if [[ ! $mcheck = "Yes" ]]; then wasmounted=0; DO_MOUNT; else wasmounted=1; fi
+        vname=`df | egrep ${string} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
+        if [[ $mcheck = "Yes" ]]; then if [[ "${OpenFinder}" = "1" ]] || [[ "${wasmounted}" = "1" ]]; then open "$vname"; fi; fi
+    done
 }
 
 DO_MOUNT(){
@@ -1144,6 +1160,9 @@ kill $mspid
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
 
+#else
+#    MSG_EXEC_FAILED
+
 fi
 }
 
@@ -1188,6 +1207,10 @@ done
 kill $mspid
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
+
+#else
+#    MSG_EXEC_FAILED
+
 fi
 }
 
@@ -1231,6 +1254,9 @@ done
 kill $mspid
 if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
+
+#else
+#    MSG_EXEC_FAILED
 
 fi
 
@@ -1507,6 +1533,7 @@ fi
 
 IF_UNLOCK_SAFE_MODE(){
 if [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then 
+    NEED_PASSWORD
     if [[ $(kextstat -l | grep -ow com.apple.filesystems.msdosfs) = "" ]]; then 
         if [[ ! "${mypassword}" = "" ]]; then
  	         rsync -avq  /S*/L*/E*/msdosfs.kext ~/Library/Application\ Support/EasyEFIsupport
@@ -1630,20 +1657,23 @@ if [[ ${modename} = "" ]]; then
         if [[ ! "${pswrd}" = "" ]]; then STORE_PASSWORD; unset pswrd; fi
 
     disk_mount_list=( $(echo "${result_names}" | egrep -o "disk[0-9]*s[0-9]*") )
-    if [[ ! ${#disk_mount_list[@]} = "0" ]]; then 
-        NEED_PASSWORD
+    if [[ ! ${#disk_mount_list[@]} = "0" ]]; then
         IF_UNLOCK_SAFE_MODE    
-    if [[ ${need_password} = 0 ]]; then
         UPDATE_CACHE
         GET_OPENFINDER
-    for string in ${disk_mount_list[@]}; do
-        mcheck=`df | grep ${string}`; if [[ ! $mcheck = "" ]]; then mcheck="Yes"; fi 
-        if [[ ! $mcheck = "Yes" ]]; then wasmounted=0; DO_MOUNT; else wasmounted=1; fi
-        vname=`df | egrep ${string} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
-        if [[ $mcheck = "Yes" ]]; then if [[ "${OpenFinder}" = "1" ]] || [[ "${wasmounted}" = "1" ]]; then open "$vname"; fi; fi
-    done
-        if [[ ${menu_mode} = 0 ]] &amp;&amp; [[ ! ${hotplug_flag} = 1 ]]; then break; fi
-    fi
+        need_password=0; mounted_list=(); unmounted_list=()
+    match=0; for string in ${disk_mount_list[@]}; do if [[ $(df | grep ${string}) = "" ]]; then match=1; unmounted_list+=( ${string} ); else mounted_list+=( ${string} ); fi; done
+    if [[ ! ${#mounted_list[@]} = 0 ]]; then disk_mount_list=( ${mounted_list[@]} ); IF_MOUNT_ALL; fi
+    if [[ ! ${#unmounted_list[@]} = 0 ]]; then
+        disk_mount_list=( ${unmounted_list[@]} )
+        if [[ $match = 1 ]]; then NEED_PASSWORD; unset match; fi
+            if [[ ! $need_password = 1 ]]; then
+            IF_MOUNT_ALL
+            if [[ ${menu_mode} = 0 ]] &amp;&amp; [[ ! ${hotplug_flag} = 1 ]]; then break; fi
+#   else
+#        MSG_EXEC_FAILED
+            fi
+        fi
     fi
 fi
 if [[ ${hotplug_flag} = 1 ]]; then GETARR; hotplug_flag=0; fi
