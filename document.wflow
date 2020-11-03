@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>AMApplicationBuild</key>
-	<string>444.42</string>
+	<string>444.7</string>
 	<key>AMApplicationVersion</key>
-	<string>2.9</string>
+	<string>2.8</string>
 	<key>AMDocumentVersion</key>
 	<string>2</string>
 	<key>actions</key>
@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 21.09.2020.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 03.11.2020.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="015"
+edit_vers="018"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -112,7 +112,7 @@ if [[ ! -f "${EASYEFI_SUPPORT}"/AutoUpdateLock.txt ]]; then
         current_vers=$(echo "$prog_vers" | tr -d "." ); vers_e=$(echo $edit_vers | bc)
         autoupdate_string=$( cat "${EASYEFI_SUPPORT}"/AutoupdatesInfo.txt | tr '\n' ';' ); IFS=';' autoupdate_list=(${autoupdate_string}); unset IFS
         last_e=$(echo ${autoupdate_list[1]} | bc)
-    if [[ "${current_vers}" -lt "${autoupdate_list[0]}" ]] || [[ "${last_e}" -gt "${vers_e}" ]]; then
+    if [[ $( echo "${autoupdate_list[0]}000+${last_e}" | bc) -gt $( echo "${current_vers}000+${vers_e}"  | bc) ]]; then
       if [[ ! -f "${EASYEFI_SUPPORT}"/${autoupdate_list[1]}".zip" ]] || [[ ! $(md5 -qq "${EASYEFI_SUPPORT}"/${autoupdate_list[1]}".zip") = ${autoupdate_list[2]} ]]; then
         if curl -s https://github.com/Andrej-Antipov/EasyEFI/raw/master/Updates/${autoupdate_list[0]}/${autoupdate_list[1]}".zip" -L -o "${EASYEFI_SUPPORT}"/${autoupdate_list[1]}".zip" ; then
            if [[ -f "${EASYEFI_SUPPORT}"/${autoupdate_list[1]}".zip" ]]; then 
@@ -172,7 +172,7 @@ echo '        mv -f ~/.EasyEFIupdates/document.wflow "${ProgPath}" ; rm -Rf ~/.E
 echo '        plutil -replace CFBundleShortVersionString -string "$vers" "${ProgPath}"/Info.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        plutil -replace NSHumanReadableCopyright -string "Copyright © 2020 gosvamih. All rights reserved." "${ProgPath}"/Info.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        touch  "${ProgPath}"/../.' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh 
-echo '        echo "$vers" >> ~/Library/Application\ Support/EasyEFIsupport/UpdatedInfo.txt' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
+echo '        echo "$vers" &gt;&gt; ~/Library/Application\ Support/EasyEFIsupport/UpdatedInfo.txt' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo '        plutil -replace ReadyToAutoUpdate -bool No ~/Library/Application\ Support/EasyEFIsupport/EasyEFIconf.plist' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo ''  &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
 echo 'fi' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIu.sh
@@ -231,9 +231,12 @@ osascript -e 'display dialog '"${error_message}"'  with icon caution buttons { "
 if [[ ${menu_mode} = 0 ]]; then EXIT_PROGRAM; fi
 }
 
-ERROR_OS_VERSION(){
-menu_mode=0
-if [[ $loc = "ru" ]]; then error_message='"Mac OS '$(sw_vers -productVersion)' не поддерживается !"'; else error_message='"The Mac OS '$(sw_vers -productVersion)' is not supported !"'; fi; ERROR_MSG
+WARNING_MSG(){
+if [[ $loc = "ru" ]]; then
+osascript -e 'display dialog '"${error_message}"'  with icon caution buttons { "Продолжить", "Прекратить" } default button "Прекратить" giving up after 110' 
+else
+osascript -e 'display dialog '"${error_message}"'  with icon caution buttons { "Continue", "Abort" } default button "Abort" giving up after 110'
+fi
 }
 
 DISPLAY_NOTIFICATION(){
@@ -419,11 +422,49 @@ if [[ $strng = "true" ]]; then CheckLoaders=1
 fi
 }
 
+IF_CREATE_CONFIG(){
+if [[ ! -d "${EASYEFI_SUPPORT}" ]]; then mkdir -p "${EASYEFI_SUPPORT}"; fi
+
+if [[ ! -f "${EASYEFI_SUPPORT}"/EasyEFIconf.plist ]]; then
+            echo '&lt;?xml version="1.0" encoding="UTF-8"?&gt;' &gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '&lt;plist version="1.0"&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '&lt;dict&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '  &lt;key&gt;ReadyToAutoUpdate&lt;/key&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '  &lt;false/&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '  &lt;key&gt;EasyEFIsimple&lt;/key&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '  &lt;true/&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '&lt;/dict&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+            echo '&lt;/plist&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
+
+else
+			UPDATE_EASYEFI_CONF_CACHE
+		
+fi
+}
+
+UPDATE_EASYEFI_CONF_CACHE(){
+EasyEFIconf=""
+if [[ -f "${EASYEFI_SUPPORT}"/EasyEFIconf.plist ]]; then EasyEFIconf=$(cat "${EASYEFI_SUPPORT}"/EasyEFIconf.plist); fi
+}
+
 GET_FLAG(){
-macos=$(sw_vers -productVersion | tr -d .); macos=${macos:0:4}
-if [[ ${#macos} = 3 ]]; then macos+="0"; fi
-if [[ "${macos}" -gt "1100" ]] || [[ "${macos}" -lt "1011" ]]; then ERROR_OS_VERSION; fi
-if [[ "$macos" = "1011" ]] || [[ "$macos" = "1012" ]]; then flag=0; else flag=1; GET_PASSWORD; fi
+EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEFIsupport" | xargs)
+IF_CREATE_CONFIG
+macos=$(sw_vers -productVersion | tr -d .); macos=${macos:0:4}; if [[ ${#macos} = 3 ]]; then macos+="0"; fi
+if [[ "${macos}" -gt "1101" ]] || [[ "${macos}" -lt "1011" ]]; then 
+    if [[ ! $(sw_vers -productVersion | tr -d .) = $(echo "$EasyEFIconf" | grep -A1 "&lt;key&gt;UnsupportedExecution&lt;/key&gt;" | grep string | sed -e 's/.*&gt;\(.*\)&lt;.*/\1/') ]]; then
+############## ERROR_OS_VERSION
+        GET_LOCALE
+        if [[ $loc = "ru" ]]; then 
+        error_message='"Работа программы не проверялась с этой\nверсией Mac OS : '$(sw_vers -productVersion)' !\nПосле подтверждения работа программы\nбудет продолжена, но корректное исполнение функций не гарантируется.\n"'
+        else error_message='"This program has not been tested\non Mac OS version: '$(sw_vers -productVersion)' !\nAfter confirmation, the execution will continue\nBut the correct execution is not guaranteed."'; fi
+        warn_answer=$(echo $(WARNING_MSG) | egrep -o "button returned:Continue,|Abort,|Продолжить,|Прекратить," | tr -d ',' | cut -f2 -d:)
+        if [[ "$warn_answer" = "Продолжить" || "$warn_answer" = "Continue" ]]; then plutil -replace UnsupportedExecution -string $(sw_vers -productVersion | tr -d .) "${EASYEFI_SUPPORT}"/EasyEFIconf.plist; UPDATE_EASYEFI_CONF_CACHE; else EXIT_PROGRAM; fi
+##############################
+    fi
+fi
+if [[ "$macos" = "1011" ]] || [[ "$macos" = "1012" ]]; then flag=0; else flag=1; fi
 }
 
 CHECK_USB(){
@@ -694,6 +735,10 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+cbdc9e74d27453c2f3afaec2ca84f34819758cfb7f8f157959bf608fc76a069d ) oc_revision=.63r;;
+5ee87cfa50c502249abb6e3480bfdaa0aee0e2713f267fa907bb4e1250af71f7 ) oc_revision=.63d;;
+58c4b4a88f8c41f84683bdf4afa3e77cf6bcc6d06d95a1e657e61a15666cde9f ) oc_revision=.62r;;
+5ef1fc5a81e8e4e6aeb504c91d4a1d7786652faf1a336a446b187ae283d2cc9a ) oc_revision=.62d;;
 75624767ed4f08a1ebc9f655711ba95d8ef8d1803e91c6718dfee59408b6a468 ) oc_revision=.61d;;
 58c4b4a88f8c41f84683bdf4afa3e77c3255c15833abcb05789af00c0e50bf82 ) oc_revision=.61r;;
 58c4b4a88f8c41f84683bdf4afa3e77c5010a4db83dacbcc14b090e00472c661 ) oc_revision=.60r;;
@@ -738,7 +783,10 @@ fi
 if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
-############## oc_hashes_strings 29 #################
+############## oc_hashes_strings 33 #################
+cbdc9e74d27453c2f3afaec2ca84f348 ) oc_revision=.63x;;
+5ee87cfa50c502249abb6e3480bfdaa0 ) oc_revision=.63x;;
+5ef1fc5a81e8e4e6aeb504c91d4a1d77 ) oc_revision=.62x;;
 75624767ed4f08a1ebc9f655711ba95d ) oc_revision=.61x;;
 58c4b4a88f8c41f84683bdf4afa3e77c ) oc_revision=.6xr;;
 bb901639773a1c319a3ff804128bdfb4 ) oc_revision=.60x;;
@@ -772,20 +820,6 @@ e2c2dd105dc03dc16a69fd10ff2d0eac ) oc_revision=.01d;;
                                 *)     oc_revision=""
                     esac
 fi
-
-################ no_release_hashes ##################
-#if [[ ${oc_revision} = "" ]]; then 
-            
-#                 case "${md5_loader}" in
-#ab9dcb265ab350bfe2695820394f269c ) oc_revision=.55n
-#;;
-#d3c0c19a82e9dbbf5e457ef85f8ad3b5 ) oc_revision=.55®
-#;;
-#13dd9af6c5289520dc7fad69299dd4c9 ) oc_revision=.55ð
-#;;
-#                                *)     oc_revision=""
-#                    esac
-#fi
 
 }
 
@@ -1270,11 +1304,6 @@ sudo -k
 exit
 }
 
-UPDATE_EASYEFI_CONF_CACHE(){
-EasyEFIconf=""
-if [[ -f "${EASYEFI_SUPPORT}"/EasyEFIconf.plist ]]; then EasyEFIconf=$(cat "${EASYEFI_SUPPORT}"/EasyEFIconf.plist); fi
-}
-
 SETCONF_MENUMODE(){
 if [[ ${menu_mode} = 1 ]]; then plutil -replace EasyEFIsimple -bool No "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
 else
@@ -1547,6 +1576,31 @@ if [[ "$(sysctl -n kern.safeboot)" = "1" ]]; then
 fi
 }
 
+################ корректировка списка разделов с загрузчиками ################
+CORRECT_LOADERS_LIST(){
+
+           temp_lddlist=(); temp_ldlist=(); temp_mllist=()
+
+    for k in ${!dlist[@]}; do
+        for y in ${!lddlist[@]}; do
+        if [[ ${dlist[k]} = ${lddlist[y]} ]]; then
+                temp_ldlist[k]=${ldlist[y]}
+                temp_lddlist[k]=${lddlist[y]}
+                temp_mllist[k]=${mounted_loaders_list[y]}
+                break
+        fi
+        done
+    done
+    
+    ldlist=(); lddlist=(); mounted_loaders_list=()
+    for k in ${!temp_lddlist[@]}; do lddlist[k]=${temp_lddlist[k]}; done
+    for k in ${!temp_ldlist[@]}; do ldlist[k]=${temp_ldlist[k]}; done
+    for k in ${!temp_mllist[@]}; do mounted_loaders_list[k]=${temp_mllist[k]}; done
+
+synchro=0
+
+}
+
 ################################### INIT ##################################################
 if [[ ! $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' ') = "" ]]; then 
    kill $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' '); fi
@@ -1556,24 +1610,7 @@ GET_FLAG
 EasyEFI_PID=$(ps xao pid,command | grep -i "EasyEFI.app" | grep -v grep | awk '{print $1;}')
 EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEFIsupport" | xargs)
  
-if [[ ! -d "${EASYEFI_SUPPORT}" ]]; then mkdir -p "${EASYEFI_SUPPORT}"; fi
-
-if [[ ! -f "${EASYEFI_SUPPORT}"/EasyEFIconf.plist ]]; then
-            echo '&lt;?xml version="1.0" encoding="UTF-8"?&gt;' &gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '&lt;!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '&lt;plist version="1.0"&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '&lt;dict&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '  &lt;key&gt;ReadyToAutoUpdate&lt;/key&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '  &lt;false/&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '  &lt;key&gt;EasyEFIsimple&lt;/key&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '  &lt;true/&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '&lt;/dict&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-            echo '&lt;/plist&gt;' &gt;&gt; "${EASYEFI_SUPPORT}"/EasyEFIconf.plist
-
-else
-			UPDATE_EASYEFI_CONF_CACHE
-		
-fi
+IF_CREATE_CONFIG
 
 menu_mode=0
 if [[ ! "$EasyEFIconf" = "" ]]; then
@@ -1676,7 +1713,7 @@ if [[ ${modename} = "" ]]; then
         fi
     fi
 fi
-if [[ ${hotplug_flag} = 1 ]]; then GETARR; hotplug_flag=0; fi
+if [[ ${hotplug_flag} = 1 ]]; then GETARR; CORRECT_LOADERS_LIST; hotplug_flag=0; fi
 UPDATE_SCREEN
 done
 
@@ -1794,9 +1831,9 @@ EXIT_PROGRAM
 				<key>isViewVisible</key>
 				<true/>
 				<key>location</key>
-				<string>632.000000:525.000000</string>
+				<string>639.500000:521.000000</string>
 				<key>nibPath</key>
-				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/Base.lproj/main.nib</string>
+				<string>/System/Library/Automator/Run Shell Script.action/Contents/Resources/ru.lproj/main.nib</string>
 			</dict>
 			<key>isViewVisible</key>
 			<true/>
