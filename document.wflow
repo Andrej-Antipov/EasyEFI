@@ -452,7 +452,7 @@ GET_FLAG(){
 EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEFIsupport" | xargs)
 IF_CREATE_CONFIG
 macos=$(sw_vers -productVersion | tr -d .); macos=${macos:0:4}; if [[ ${#macos} = 3 ]]; then macos+="0"; fi
-if [[ "${macos}" -gt "1101" ]] || [[ "${macos}" -lt "1011" ]]; then 
+if [[ "${macos}" -gt "1110" ]] || [[ "${macos}" -lt "1011" ]]; then 
     if [[ ! $(sw_vers -productVersion | tr -d .) = $(echo "$EasyEFIconf" | grep -A1 "&lt;key&gt;UnsupportedExecution&lt;/key&gt;" | grep string | sed -e 's/.*&gt;\(.*\)&lt;.*/\1/') ]]; then
 ############## ERROR_OS_VERSION
         GET_LOCALE
@@ -701,7 +701,7 @@ for string in ${disk_mount_list[@]}; do
         if [[ ! $mcheck = "Yes" ]]; then wasmounted=0; DO_MOUNT; else wasmounted=1; fi
         vname=`df | egrep ${string} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
         if [[ $mcheck = "Yes" ]]; then 
-        sudo fsck_msdos -fy ${string} >>/dev/null 2>/dev/null
+        sudo fsck_msdos -fy ${string} 
         if [[ "${OpenFinder}" = "1" ]] || [[ "${wasmounted}" = "1" ]]; then open "$vname"; fi; fi
     done
 }
