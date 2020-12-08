@@ -738,7 +738,8 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
-08168c486d6db6035afbad343349bbfb5e39db9a6525e4985d20fb3a0f647d7f ) oc_revision=.64r;;3336a36a7f6639c1c7326c18aa248392f23d2a4dab95b33907f42f7270d78ac4 ) oc_revision=.64d;;
+08168c486d6db6035afbad343349bbfb5e39db9a6525e4985d20fb3a0f647d7f ) oc_revision=.64r;;
+3336a36a7f6639c1c7326c18aa248392f23d2a4dab95b33907f42f7270d78ac4 ) oc_revision=.64d;;
 cbdc9e74d27453c2f3afaec2ca84f34819758cfb7f8f157959bf608fc76a069d ) oc_revision=.63r;;
 5ee87cfa50c502249abb6e3480bfdaa0aee0e2713f267fa907bb4e1250af71f7 ) oc_revision=.63d;;
 58c4b4a88f8c41f84683bdf4afa3e77cf6bcc6d06d95a1e657e61a15666cde9f ) oc_revision=.62r;;
@@ -788,7 +789,8 @@ if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
 ############## oc_hashes_strings 36 #################
-08168c486d6db6035afbad343349bbfb ) oc_revision=.64x;;3336a36a7f6639c1c7326c18aa248392 ) oc_revision=.64x;;
+08168c486d6db6035afbad343349bbfb ) oc_revision=.64x;;
+3336a36a7f6639c1c7326c18aa248392 ) oc_revision=.64x;;
 cbdc9e74d27453c2f3afaec2ca84f348 ) oc_revision=.63x;;
 5ee87cfa50c502249abb6e3480bfdaa0 ) oc_revision=.63x;;
 5ef1fc5a81e8e4e6aeb504c91d4a1d77 ) oc_revision=.62x;;
