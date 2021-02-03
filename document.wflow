@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 08.12.2020.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 03.02.2021.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="020"
+edit_vers="023"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -291,6 +291,12 @@ if [[ $loc = "ru" ]]; then error_message='"Устаревший пароль у�
 ERROR_MSG; menu_mode=${old_mode}
 }
 
+KILL_DIALOG(){ 
+kill $mspid
+if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
+   kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
+dial_pid=$(ps ax | grep -v grep | grep -w "display dialog" | grep -w '.... ' | awk '{print $NR}'); if [[ ! $dial_pid = "" ]]; then kill $dial_pid; fi; }
+
 CHANGE_PSW(){
 zx=Mac-$(ioreg -rd1 -c IOPlatformExpertDevice | awk '/IOPlatformUUID/' | cut -f2 -d"=" | tr -d '" ' | cut -f2-4 -d '-' | tr -d - | rev)
 
@@ -327,9 +333,9 @@ mypassword=""
         while [[ ! $TRY = 0 ]]; do
         while true; do
         if [[ $loc = "ru" ]]; then
-        PASS_ANSWER="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nВы можете выбрать его хранение в связке ключей\n\nПользователь:  '"$(id -F)"'\nВведите ваш пароль:" buttons {"OK", "Сохранить в связке", "Отмена"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
+        PASS_ANSWER="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nВы можете выбрать его хранение в связке ключей\n\nПользователь:  '"$(if [[ ${macos:0:3} = "109" ]]; then id -P | cut -f8 -d: ; else id -F ; fi)"'\nВведите ваш пароль:" buttons {"OK", "Сохранить в связке", "Отмена"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
         else
-        PASS_ANSWER="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nYou can choose to store the password in the keychain\n\nUser Name:  '"$(id -F)"'\nEnter your password:" buttons {"OK", "Store in keychain", "Cancel"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
+        PASS_ANSWER="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nYou can choose to store the password in the keychain\n\nUser Name:  '"$(if [[ ${macos:0:3} = "109" ]]; then id -P | cut -f8 -d: ; else id -F ; fi)"'\nEnter your password:" buttons {"OK", "Store in keychain", "Cancel"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
         fi 
         if [[ $(echo "${PASS_ANSWER}" | egrep -o "gave up:.*" | cut -f2 -d:) = "false" ]]; then break; fi
         done  
@@ -451,8 +457,8 @@ if [[ -f "${EASYEFI_SUPPORT}"/EasyEFIconf.plist ]]; then EasyEFIconf=$(cat "${EA
 GET_FLAG(){
 EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEFIsupport" | xargs)
 IF_CREATE_CONFIG
-macos=$(sw_vers -productVersion | tr -d .); macos=${macos:0:4}; if [[ ${#macos} = 3 ]]; then macos+="0"; fi
-if [[ "${macos}" -gt "1110" ]] || [[ "${macos}" -lt "1011" ]]; then 
+macos=$(sw_vers -productVersion | tr -d .); macos=${macos:0:5}; if [[ ${#macos} = 3 ]]; then macos+="00"; fi
+if [[ "${macos:0:4}" -gt "1130" ]] || [[ "${macos}" -lt "1090" ]]; then
     if [[ ! $(sw_vers -productVersion | tr -d .) = $(echo "$EasyEFIconf" | grep -A1 "&lt;key&gt;UnsupportedExecution&lt;/key&gt;" | grep string | sed -e 's/.*&gt;\(.*\)&lt;.*/\1/') ]]; then
 ############## ERROR_OS_VERSION
         GET_LOCALE
@@ -464,7 +470,7 @@ if [[ "${macos}" -gt "1110" ]] || [[ "${macos}" -lt "1011" ]]; then
 ##############################
     fi
 fi
-if [[ "$macos" = "1011" ]] || [[ "$macos" = "1012" ]]; then flag=0; else flag=1; fi
+if [[ "$macos" -lt "10130" ]]; then flag=0; else flag=1; fi; macos=${macos:0:4}
 }
 
 CHECK_USB(){
@@ -635,7 +641,7 @@ UNMOUNTS(){
 if [[ $loc = "ru" ]]; then
 MESSAGE='"Отключение  EFI разделов .... !"'
 else
-MESSAGE='"Unmounting EFI partitions ....!"'
+MESSAGE='"Unmounting EFI partitions .... !"'
 fi
 
 MESSAGE_SEARCH &amp;
@@ -646,7 +652,7 @@ GETARR
 var1=$pos
 num=0
 
-cd "${ROOT}"
+cd "${ROOT}"; if [[ ! $flag = 0 ]]; then CHECK_PASSWORD; fi
 
 while [ $var1 != 0 ] 
 do 
@@ -658,8 +664,10 @@ do
 
 
 if [[ $mcheck = "Yes" ]]; then
-
+        if osascript -e 'tell application "Finder" to get window "EFI"' >>/dev/null 2>/dev/null 
+        then osascript -e 'tell application "Finder" to close  window "EFI"' >>/dev/null 2>/dev/null; fi
 	diskutil quiet umount force  /dev/${string}
+    if [[ ! $flag = 0 ]] &amp;&amp; [[ ${need_password} = 0 ]]; then sudo fsck_msdos -fy "/dev/${string}"; else fsck_msdos -fy "/dev/${string}"; fi
 
 	UNMOUNTED_CHECK	
 fi
@@ -667,9 +675,7 @@ fi
 	let "var1--"
 done
 
-kill $mspid
-if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
-   kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
+KILL_DIALOG
 }
 
 MOUNTED_CHECK(){
@@ -738,6 +744,10 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+04c57770779dec6ffa9742b07ca215cf71309b1a64eb1532102eb449eece47bf ) oc_revision=.66d;;
+f899634ce13653c971aa67a1f445780aa29f8e0bb2622799b5f50e63d2587382 ) oc_revision=.66r;;
+08168c486d6db6035afbad343349bbfb146d835a6ca1af0e43fb5c14274004fc ) oc_revision=.65r;;
+b773dd607335a5641e80c732737b6a1563296f1dd2e65459bdece8c9634e19c2 ) oc_revision=.65d;;
 08168c486d6db6035afbad343349bbfb5e39db9a6525e4985d20fb3a0f647d7f ) oc_revision=.64r;;
 3336a36a7f6639c1c7326c18aa248392f23d2a4dab95b33907f42f7270d78ac4 ) oc_revision=.64d;;
 cbdc9e74d27453c2f3afaec2ca84f34819758cfb7f8f157959bf608fc76a069d ) oc_revision=.63r;;
@@ -788,8 +798,12 @@ fi
 if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
-############## oc_hashes_strings 36 #################
-08168c486d6db6035afbad343349bbfb ) oc_revision=.64x;;
+############## oc_hashes_strings 40 #################
+f899634ce13653c971aa67a1f445780a ) oc_revision=.66x;;
+04c57770779dec6ffa9742b07ca215cf ) oc_revision=.66x;;
+b773dd607335a5641e80c732737b6a15 ) oc_revision=.65x;;
+08168c486d6db6035afbad343349bbfb ) oc_revision=.6xr;;
+08168c486d6db6035afbad343349bbfb ) oc_revision=.6xr;;
 3336a36a7f6639c1c7326c18aa248392 ) oc_revision=.64x;;
 cbdc9e74d27453c2f3afaec2ca84f348 ) oc_revision=.63x;;
 5ee87cfa50c502249abb6e3480bfdaa0 ) oc_revision=.63x;;
@@ -1200,10 +1214,7 @@ while [ $var1 != 0 ]; do
     let "var1--"
 done
 
-kill $mspid
-if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
-   kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
-
+KILL_DIALOG
 #else
 #    MSG_EXEC_FAILED
 
@@ -1248,10 +1259,7 @@ while [ $var1 != 0 ]; do
     let "var1--"
 done
 
-kill $mspid
-if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
-   kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
-
+KILL_DIALOG
 #else
 #    MSG_EXEC_FAILED
 
@@ -1267,7 +1275,7 @@ if [[ ${need_password} = 0 ]]; then
 if [[ $loc = "ru" ]]; then
 MESSAGE='"Поиск и распознавание всех BOOTx64.efi\nв EFI разделах .... !"'
 else
-MESSAGE='"Searching for EFI partitions and detecting\nBOOTx64.efi loaders ....!"'
+MESSAGE='"Searching for EFI partitions and detecting\nBOOTx64.efi loaders .... !"'
 fi
 MESSAGE_SEARCH &amp;
 mspid=$(($!+2))
@@ -1295,10 +1303,7 @@ while [ $var1 != 0 ]; do
     let "var1--"
 done
 
-kill $mspid
-if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
-   kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
-
+KILL_DIALOG
 #else
 #    MSG_EXEC_FAILED
 
@@ -1643,7 +1648,7 @@ if [[ ! $mspid2 = "" ]]; then sleep 2; fi
 if [[ $loc = "ru" ]]; then
 MESSAGE='"Поиск EFI разделов .... !"'
 else
-MESSAGE='"Searching for EFI partitions ....!"'
+MESSAGE='"Searching for EFI partitions .... !"'
 fi
 MESSAGE_SEARCH &amp;
 mspid=$(($!+2))
@@ -1651,9 +1656,7 @@ sleep 0.5
 if [[ ! $mspid2 = "" ]]; then kill $mspid2; fi
 GETARR
 GETLIST
-kill $mspid
-if [[ ! $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' ') = "" ]]; then 
-   kill $(ps ax | grep -v grep | grep "display dialog" | xargs | cut -f1 -d' '); fi
+KILL_DIALOG
 while true; do
 #################### MAIN MENU #####################
 
