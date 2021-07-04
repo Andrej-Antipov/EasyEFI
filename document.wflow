@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 03.02.2021.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 06.04.2021.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="023"
+edit_vers="027"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -457,8 +457,9 @@ if [[ -f "${EASYEFI_SUPPORT}"/EasyEFIconf.plist ]]; then EasyEFIconf=$(cat "${EA
 GET_FLAG(){
 EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEFIsupport" | xargs)
 IF_CREATE_CONFIG
-macos=$(sw_vers -productVersion | tr -d .); macos=${macos:0:5}; if [[ ${#macos} = 3 ]]; then macos+="00"; fi
-if [[ "${macos:0:4}" -gt "1130" ]] || [[ "${macos}" -lt "1090" ]]; then
+mac_vers=($(sw_vers -productVersion | tr "." " "))
+macos="$((${mac_vers[0]}*10000+${mac_vers[1]}*100))"; if [[ ! ${mac_vers[2]} = "" ]]; then macos=$(($macos+${mac_vers[2]})); fi
+if [[ "${macos:0:4}" -gt "1104" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
     if [[ ! $(sw_vers -productVersion | tr -d .) = $(echo "$EasyEFIconf" | grep -A1 "&lt;key&gt;UnsupportedExecution&lt;/key&gt;" | grep string | sed -e 's/.*&gt;\(.*\)&lt;.*/\1/') ]]; then
 ############## ERROR_OS_VERSION
         GET_LOCALE
@@ -470,7 +471,7 @@ if [[ "${macos:0:4}" -gt "1130" ]] || [[ "${macos}" -lt "1090" ]]; then
 ##############################
     fi
 fi
-if [[ "$macos" -lt "10130" ]]; then flag=0; else flag=1; fi; macos=${macos:0:4}
+if [[ "$macos:0:4" -lt "1013" ]]; then flag=0; else flag=1; fi; macos=${macos:0:4}
 }
 
 CHECK_USB(){
@@ -744,6 +745,14 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+4f20303dacf960845b5efc3f23e972ea67406c9656c353aa8919c8930c897c3c ) oc_revision=.70r;;
+abbc9c54d4eb8ef39c04e1f830da9d0c26f6d78711ec93afededcee86abe7c8d ) oc_revision=.70d;;
+6e79e19d44ff940e7018c0b6c32708ee33dc9e8185b66f4ab466890590011351 ) oc_revision=.69r;;
+681157df6c58bafdc592acab79406de05b8545e031bd9341f7bc20fe313cc390 ) oc_revision=.69d;;
+6e79e19d44ff940e7018c0b6c32708ee7451af0a43fe1c87f2c5e46627070337 ) oc_revision=.68r;;
+85e0d90c68cefa90e159d882ef8c47637839b1ff468f88d552703d6cf04d427a ) oc_revision=.68d;;
+f5faff076f01297c5b0272581d2305ecd52d02c34833ed1e02880a6bad6ba620 ) oc_revision=.67r;;
+610c1882cababbc9edff52b31d07666101ed550d56ace511e31e447bb26b85f0 ) oc_revision=.67d;;
 04c57770779dec6ffa9742b07ca215cf71309b1a64eb1532102eb449eece47bf ) oc_revision=.66d;;
 f899634ce13653c971aa67a1f445780aa29f8e0bb2622799b5f50e63d2587382 ) oc_revision=.66r;;
 08168c486d6db6035afbad343349bbfb146d835a6ca1af0e43fb5c14274004fc ) oc_revision=.65r;;
@@ -798,7 +807,15 @@ fi
 if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
-############## oc_hashes_strings 40 #################
+############## oc_hashes_strings 44 #################
+abbc9c54d4eb8ef39c04e1f830da9d0c ) oc_revision=.7xd;;
+4f20303dacf960845b5efc3f23e972ea ) oc_revision=.7xr;;
+6e79e19d44ff940e7018c0b6c32708ee ) oc_revision=.6xr;;
+681157df6c58bafdc592acab79406de0 ) oc_revision=.6xd;;
+6e79e19d44ff940e7018c0b6c32708ee ) oc_revision=.68x;;
+85e0d90c68cefa90e159d882ef8c4763 ) oc_revision=.68x;;
+f5faff076f01297c5b0272581d2305ec ) oc_revision=.67x;;
+610c1882cababbc9edff52b31d076661 ) oc_revision=.67x;;
 f899634ce13653c971aa67a1f445780a ) oc_revision=.66x;;
 04c57770779dec6ffa9742b07ca215cf ) oc_revision=.66x;;
 b773dd607335a5641e80c732737b6a15 ) oc_revision=.65x;;
