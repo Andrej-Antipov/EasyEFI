@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 06.04.2021.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 29.08.2021.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="027"
+edit_vers="028"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -459,7 +459,7 @@ EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEF
 IF_CREATE_CONFIG
 mac_vers=($(sw_vers -productVersion | tr "." " "))
 macos="$((${mac_vers[0]}*10000+${mac_vers[1]}*100))"; if [[ ! ${mac_vers[2]} = "" ]]; then macos=$(($macos+${mac_vers[2]})); fi
-if [[ "${macos:0:4}" -gt "1104" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
+if [[ "${macos:0:4}" -gt "1105" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
     if [[ ! $(sw_vers -productVersion | tr -d .) = $(echo "$EasyEFIconf" | grep -A1 "&lt;key&gt;UnsupportedExecution&lt;/key&gt;" | grep string | sed -e 's/.*&gt;\(.*\)&lt;.*/\1/') ]]; then
 ############## ERROR_OS_VERSION
         GET_LOCALE
@@ -489,7 +489,7 @@ GET_EFI_S(){
 ioreg_iomedia=$( ioreg -c IOMedia -r | tr -d '"|+{}\t' )
 usb_iomedia=$( IOreg -c IOBlockStorageServices -r | grep "Device Characteristics" | tr -d '|{}"' | sed s'/Device Characteristics =//' | rev | cut -f2-3 -d, | rev | tr '\n' ';'  | xargs )
 drives_iomedia=$( echo "$ioreg_iomedia" |  egrep -A 22 "&lt;class IOMedia," )
-string=$( diskutil list | grep EFI | grep -oE '[^ ]+$' | xargs | tr ' ' ';' )
+string=$( diskutil list | egrep "EFI|Apple_APFS_ISC" | grep -oE '[^ ]+$' | xargs | tr ' ' ';' )
 disk_images=$( echo "$ioreg_iomedia" | egrep -A 22 "Apple " | grep "BSD Name" | cut -f2 -d "="  | tr -d " " | tr '\n' ';' )
 syspart=$( df / | grep /dev | cut -f1 -d " " | sed s'/dev//' | tr -d '/ \n' )
 IFS=';'; dlist=($string); ilist=($disk_images); usb_iolist=($usb_iomedia); unset IFS; pos=${#dlist[@]}; posi=${#ilist[@]}; pusb=${#usb_iolist[@]}
@@ -745,6 +745,10 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+a82baf091a7e07681feded93e76f5ef31314c4f3220539d997637fa0b57026b5 ) oc_revision=.72r;;
+94d1e33832384b4f1580e19e4c0a9c4f9848c07e173aa448ea701b3ed0e210b5 ) oc_revision=.72d;;
+4f20303dacf960845b5efc3f23e972ea1160d5af5f29ef17c2c870862f2a4728 ) oc_revision=.71r;;
+1885fc5236ed3e9a5335862820ca080c9001a6107a0db056e896cf68c26471c8 ) oc_revision=.71d;;
 4f20303dacf960845b5efc3f23e972ea67406c9656c353aa8919c8930c897c3c ) oc_revision=.70r;;
 abbc9c54d4eb8ef39c04e1f830da9d0c26f6d78711ec93afededcee86abe7c8d ) oc_revision=.70d;;
 6e79e19d44ff940e7018c0b6c32708ee33dc9e8185b66f4ab466890590011351 ) oc_revision=.69r;;
@@ -807,7 +811,10 @@ fi
 if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
-############## oc_hashes_strings 44 #################
+############## oc_hashes_strings 42 #################
+a82baf091a7e07681feded93e76f5ef3 ) oc_revision=.72x;;
+94d1e33832384b4f1580e19e4c0a9c4f ) oc_revision=.72x;;
+1885fc5236ed3e9a5335862820ca080c ) oc_revision=.71x;;
 abbc9c54d4eb8ef39c04e1f830da9d0c ) oc_revision=.7xd;;
 4f20303dacf960845b5efc3f23e972ea ) oc_revision=.7xr;;
 6e79e19d44ff940e7018c0b6c32708ee ) oc_revision=.6xr;;
@@ -847,14 +854,6 @@ eb66a8a986762b9cadecb6408ecb1ec7 ) oc_revision=.51x;;
 c31035549f86156ff5e79b9d87240ec5 ) oc_revision=.51x;;
 7844acab1d74aeccc5d2696627c1ed3d ) oc_revision=.50x;;
 c221f59769bd185857b2c30858fe3aa2 ) oc_revision=.50x;;
-91ea6c185c31a25c791da956c79808f9 ) oc_revision=.04r;;
-5bb02432d1d1272fdcdff91fcf33d75b ) oc_revision=.04d;;
-303a7f1391743e6bc52a38d614b5dd93 ) oc_revision=.03r;;
-52195547d645623036effeadd31e21a9 ) oc_revision=.03d;;
-7805dc51bd280055d85775c512a832b0 ) oc_revision=.02r;;
-bb222980e4823798202b3a9cff63b604 ) oc_revision=.02d;;
-297e30883f3db26a30e48f6b757fd968 ) oc_revision=.01r;;
-e2c2dd105dc03dc16a69fd10ff2d0eac ) oc_revision=.01d;;
                                 *)     oc_revision=""
                     esac
 fi
