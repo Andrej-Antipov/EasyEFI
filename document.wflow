@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 29.08.2021.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 11.09.2021.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="028"
+edit_vers="029"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -745,6 +745,8 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+4243fdcb81cf573a296b7fb9199deba695a3f5b7df5e3aee7f44588d56fe1cd3 ) oc_revision=.73r;;
+0cce1dfa6e0a2ff6f425609ae91606debda0fed36bdb3301c1b788f8259c74fe ) oc_revision=.73d;;
 a82baf091a7e07681feded93e76f5ef31314c4f3220539d997637fa0b57026b5 ) oc_revision=.72r;;
 94d1e33832384b4f1580e19e4c0a9c4f9848c07e173aa448ea701b3ed0e210b5 ) oc_revision=.72d;;
 4f20303dacf960845b5efc3f23e972ea1160d5af5f29ef17c2c870862f2a4728 ) oc_revision=.71r;;
@@ -812,6 +814,8 @@ if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
 ############## oc_hashes_strings 42 #################
+0cce1dfa6e0a2ff6f425609ae91606de ) oc_revision=.73x;;
+4243fdcb81cf573a296b7fb9199deba6 ) oc_revision=.73x;;
 a82baf091a7e07681feded93e76f5ef3 ) oc_revision=.72x;;
 94d1e33832384b4f1580e19e4c0a9c4f ) oc_revision=.72x;;
 1885fc5236ed3e9a5335862820ca080c ) oc_revision=.71x;;
@@ -914,12 +918,12 @@ GET_LOADER_STRING(){
                
                if [[ ! "${loader:0:5}" = "Other" ]]; then
                 
-                    check_loader=$( xxd "$vname"/EFI/BOOT/BOOTX64.EFI | egrep -om1  "Clover|OpenCore|GNU/Linux|Microsoft C|Refind" )
+                    check_loader=$( xxd "$vname$loaderPath" | egrep -om1  "Clover|OpenCore|GNU/Linux|Microsoft C|Refind" )
                     case "${check_loader}" in
                     "Clover"    ) loader="Clover"; GET_CONFIG_VERS "Clover"
                                 if [[ ${revision} = "" ]]; then
-                                revision=$( xxd "$vname"/EFI/BOOT/BOOTX64.efi | grep -a1 "Clover" | cut -c 50-68 | tr -d ' \n' | egrep -o  'revision:[0-9]{4}' | cut -f2 -d: ); fi
-                                if [[ ${revision} = "" ]]; then revision=$( xxd  "$vname"/EFI/BOOT/BOOTX64.efi | grep -a1 'revision:' | cut -c 50-68 | tr -d ' \n' | egrep -o  'revision:[0-9]{4}' | cut -f2 -d: ); fi
+                                revision=$( xxd "$vname$loaderPath" | grep -a1 "Clover" | cut -c 50-68 | tr -d ' \n' | egrep -o  'revision:[0-9]{4}' | cut -f2 -d: ); fi
+                                if [[ ${revision} = "" ]]; then revision=$( xxd  "$vname$loaderPath" | grep -a1 'revision:' | cut -c 50-68 | tr -d ' \n' | egrep -o  'revision:[0-9]{4}' | cut -f2 -d: ); fi
                                 loader+="${revision:0:4}"
                                 ;;
   
@@ -952,9 +956,11 @@ FIND_LOADERS(){
     if [[ $mcheck = "Yes" ]]; then 
 
 vname=`df | egrep ${string} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
-
-			if  [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]] &amp;&amp; [[ -f "$vname"/EFI/BOOT/bootx64.efi ]] &amp;&amp; [[ -f "$vname"/EFI/BOOT/BOOTx64.efi ]]; then  
-                md5_loader=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi )     
+			loaderPath=""
+			if [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]]; then loaderPath="/EFI/BOOT/BOOTX64.efi"; 
+				elif [[ -f "$vname"/System/Library/CoreServices/boot.efi ]]; then loaderPath="/System/Library/CoreServices/boot.efi"; fi
+			if  [[ ! "${loaderPath}" = "" ]]; then               
+			md5_loader=$( md5 -qq "$vname$loaderPath" )     
                 if [[ ${md5_loader} = "" ]]; then loader=""; else
                    if [[ ${mounted_loaders_list[$pnum]} = ${md5_loader} ]]; then loader=""; else
                     SHIFT_UP
@@ -1258,10 +1264,12 @@ while [ $var1 != 0 ]; do
 
     vname=`df | egrep ${string} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
 
-	if [[ -d "$vname"/EFI/BOOT ]]; then
-			if [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]] &amp;&amp; [[ -f "$vname"/EFI/BOOT/bootx64.efi ]] &amp;&amp; [[ -f "$vname"/EFI/BOOT/BOOTx64.efi ]]; then 
-
-					check_loader=`xxd "$vname"/EFI/BOOT/BOOTX64.EFI | grep -Eo "OpenCore"` ; check_loader=`echo ${check_loader:0:8}`
+	if [[ -d "$vname"/EFI ]]; then
+					loaderPath=""
+					if [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]]; then loaderPath="/EFI/BOOT/bootx64.efi"; 
+					elif [[ -f "$vname"/System/Library/CoreServices/boot.efi ]]; then loaderPath="/System/Library/CoreServices/boot.efi"; fi			
+			if [[ ! "${loaderPath}" = "" ]]; then
+					check_loader=`xxd "$vname$loaderPath" | grep -Eo "OpenCore"` ; check_loader=`echo ${check_loader:0:8}`
                 					if [[ ${check_loader} = "OpenCore" ]]; then
                        						 if [[ ! $OpenFinder = 0 ]]; then open "$vname/EFI"; fi
 							 was_mounted=1
@@ -1433,8 +1441,11 @@ if [[ $hotplug = 0 ]]; then synchro=0
         mounted_check=$( df | grep ${dlist[$pnum]} )   
             if [[ ! $mounted_check = "" ]]; then 
             vname=`df | egrep ${dlist[$pnum]} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
-                    if ! loader_sum=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi 2&gt;/dev/null); then loader_sum=0 ; fi
-                    if [[ ! ${mounted_loaders_list[$pnum]} = ${loader_sum} ]] || ( [[ $( xxd "$vname"/EFI/BOOT/BOOTX64.EFI | egrep -om1 "OpenCore" ) = "OpenCore" ]] &amp;&amp; [[ ! ${oc_list[pnum]} = $( md5 -qq "$vname"/EFI/OC/OpenCore.efi ) ]]  ); then
+            loaderPath=""
+			if [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]]; then loaderPath="/EFI/BOOT/BOOTX64.efi"; 
+				elif [[ -f "$vname"/System/Library/CoreServices/boot.efi ]]; then loaderPath="/System/Library/CoreServices/boot.efi"; fi
+                    if ! loader_sum=$( md5 -qq "$vname$loaderPath" 2&gt;/dev/null); then loader_sum=0 ; fi
+                    if [[ ! ${mounted_loaders_list[$pnum]} = ${loader_sum} ]] || ( [[ $( xxd "$vname$loaderPath" | egrep -om1 "OpenCore" ) = "OpenCore" ]] &amp;&amp; [[ ! ${oc_list[pnum]} = $( md5 -qq "$vname"/EFI/OC/OpenCore.efi ) ]]  ); then
                      hotplug=1; echo "1" &gt; ~/Library/Application\ Support/EasyEFIsupport/recheckLoadersFlag; break; fi
             fi
         done        
@@ -1573,8 +1584,11 @@ if [[ ! $CheckLoaders = 0 ]] &amp;&amp; [[ -f ~/Library/Application\ Support/Eas
         mounted_check=$( df | grep ${dlist[$pnum]} )   
             if [[ ! $mounted_check = "" ]]; then 
             vname=`df | egrep ${dlist[$pnum]} | sed 's#\(^/\)\(.*\)\(/Volumes.*\)#\1\3#' | cut -c 2-`
-                    if ! loader_sum=$( md5 -qq "$vname"/EFI/BOOT/BOOTx64.efi ); then loader_sum=0; fi
-                    if [[ ! ${loader_sum} = 0 ]] &amp;&amp; ( [[ $( xxd "$vname"/EFI/BOOT/BOOTX64.EFI | egrep -om1 "OpenCore" ) = "OpenCore" ]] &amp;&amp; [[ ! ${oc_list[pnum]} = $( md5 -qq "$vname"/EFI/OC/OpenCore.efi ) ]] ); then 
+            loaderPath=""
+			if [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]]; then loaderPath="/EFI/BOOT/BOOTX64.efi"; 
+				elif [[ -f "$vname"/System/Library/CoreServices/boot.efi ]]; then loaderPath="/System/Library/CoreServices/boot.efi"; fi
+                    if ! loader_sum=$( md5 -qq "$vname$loaderPath" ); then loader_sum=0; fi
+                    if [[ ! ${loader_sum} = 0 ]] &amp;&amp; ( [[ $( xxd "$vname$loaderPath" | egrep -om1 "OpenCore" ) = "OpenCore" ]] &amp;&amp; [[ ! ${oc_list[pnum]} = $( md5 -qq "$vname"/EFI/OC/OpenCore.efi ) ]] ); then 
                             oc_list[pnum]=$( md5 -qq "$vname"/EFI/OC/OpenCore.efi )
                             md5_loader=${loader_sum}; GET_OC_VERS; update_screen_flag=1
                     fi
