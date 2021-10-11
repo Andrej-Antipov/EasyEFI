@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 11.09.2021.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 11.10.2021.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="029"
+edit_vers="030"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -745,6 +745,8 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+4243fdcb81cf573a296b7fb9199deba681a2ac329da9548da0ab0cb140eb9661 ) oc_revision=.74r;;
+0cce1dfa6e0a2ff6f425609ae91606de95497990f2dde60661ec66c57f55a28b ) oc_revision=.74d;;
 4243fdcb81cf573a296b7fb9199deba695a3f5b7df5e3aee7f44588d56fe1cd3 ) oc_revision=.73r;;
 0cce1dfa6e0a2ff6f425609ae91606debda0fed36bdb3301c1b788f8259c74fe ) oc_revision=.73d;;
 a82baf091a7e07681feded93e76f5ef31314c4f3220539d997637fa0b57026b5 ) oc_revision=.72r;;
@@ -814,8 +816,8 @@ if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
 ############## oc_hashes_strings 42 #################
-0cce1dfa6e0a2ff6f425609ae91606de ) oc_revision=.73x;;
-4243fdcb81cf573a296b7fb9199deba6 ) oc_revision=.73x;;
+0cce1dfa6e0a2ff6f425609ae91606de ) oc_revision=.7xd;;
+4243fdcb81cf573a296b7fb9199deba6 ) oc_revision=.7xr;;
 a82baf091a7e07681feded93e76f5ef3 ) oc_revision=.72x;;
 94d1e33832384b4f1580e19e4c0a9c4f ) oc_revision=.72x;;
 1885fc5236ed3e9a5335862820ca080c ) oc_revision=.71x;;
