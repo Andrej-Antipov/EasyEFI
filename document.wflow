@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 11.10.2021.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 04.11.2021.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="030"
+edit_vers="031"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -188,6 +188,17 @@ if [[ ! $(launchctl list | grep "EasyEFIu.job" | cut -f3 | grep -x "EasyEFIu.job
     rm -f "${EASYEFI_SUPPORT}"/AutoUpdateLock.txt
 fi
 
+}
+
+RESET_SYSTEM_PERMISSIONS(){
+	while ! osascript -e 'Tell application "System Events" to keystroke ""'; do tccutil reset AppleEvents com.apple.automator.EasyEFI
+	if [[ $loc = "ru" ]]; then
+MESSAGE='"Для диалоговых окон требуются разрешения !\nНажмите OK для разрешений !"'
+else
+MESSAGE='"Dialog windows require permissions !\nClick OK for permissions !"'
+fi
+DISPLAY_MESSAGE1 >>/dev/null 2>/dev/null
+	done  2>/dev/null
 }
 
 CHECK_START_UPDATE(){
@@ -745,6 +756,8 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+4243fdcb81cf573a296b7fb9199deba6f4ee8bbaf27fcb34367d6192b5db1eec ) oc_revision=.75r;;
+0cce1dfa6e0a2ff6f425609ae91606de5be2c6ee90d95f786e8d511ce2124055 ) oc_revision=.75d;;
 4243fdcb81cf573a296b7fb9199deba681a2ac329da9548da0ab0cb140eb9661 ) oc_revision=.74r;;
 0cce1dfa6e0a2ff6f425609ae91606de95497990f2dde60661ec66c57f55a28b ) oc_revision=.74d;;
 4243fdcb81cf573a296b7fb9199deba695a3f5b7df5e3aee7f44588d56fe1cd3 ) oc_revision=.73r;;
@@ -1690,6 +1703,7 @@ GETARR
 GETLIST
 KILL_DIALOG
 while true; do
+RESET_SYSTEM_PERMISSIONS
 #################### MAIN MENU #####################
 
 START_CHECK_HOTPLUG &amp;
