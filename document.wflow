@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 04.11.2021.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 11.12.2021.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="031"
+edit_vers="032"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -344,9 +344,9 @@ mypassword=""
         while [[ ! $TRY = 0 ]]; do
         while true; do
         if [[ $loc = "ru" ]]; then
-        PASS_ANSWER="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nВы можете выбрать его хранение в связке ключей\n\nПользователь:  '"$(if [[ ${macos:0:3} = "109" ]]; then id -P | cut -f8 -d: ; else id -F ; fi)"'\nВведите ваш пароль:" buttons {"OK", "Сохранить в связке", "Отмена"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
+        PASS_ANSWER="$(osascript -e 'display dialog "'"${sudo_message}"'\nВы можете выбрать его хранение в связке ключей\n\nПользователь:  '"$(if [[ ${macos:0:3} = "109" ]]; then id -P | cut -f8 -d: ; else id -F ; fi)"'\nВведите ваш пароль:" buttons {"OK", "Сохранить в связке", "Отмена"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
         else
-        PASS_ANSWER="$(osascript -e 'Tell application "System Events" to display dialog "'"${sudo_message}"'\nYou can choose to store the password in the keychain\n\nUser Name:  '"$(if [[ ${macos:0:3} = "109" ]]; then id -P | cut -f8 -d: ; else id -F ; fi)"'\nEnter your password:" buttons {"OK", "Store in keychain", "Cancel"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
+        PASS_ANSWER="$(osascript -e 'display dialog "'"${sudo_message}"'\nYou can choose to store the password in the keychain\n\nUser Name:  '"$(if [[ ${macos:0:3} = "109" ]]; then id -P | cut -f8 -d: ; else id -F ; fi)"'\nEnter your password:" buttons {"OK", "Store in keychain", "Cancel"  } default button "OK" '"${icon_string}"' giving up after (110) with hidden answer  default answer ""')" 2&gt;/dev/null
         fi 
         if [[ $(echo "${PASS_ANSWER}" | egrep -o "gave up:.*" | cut -f2 -d:) = "false" ]]; then break; fi
         done  
@@ -470,7 +470,7 @@ EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEF
 IF_CREATE_CONFIG
 mac_vers=($(sw_vers -productVersion | tr "." " "))
 macos="$((${mac_vers[0]}*10000+${mac_vers[1]}*100))"; if [[ ! ${mac_vers[2]} = "" ]]; then macos=$(($macos+${mac_vers[2]})); fi
-if [[ "${macos:0:4}" -gt "1201" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
+if [[ "${macos:0:4}" -gt "1210" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
     if [[ ! $(sw_vers -productVersion | tr -d .) = $(echo "$EasyEFIconf" | grep -A1 "&lt;key&gt;UnsupportedExecution&lt;/key&gt;" | grep string | sed -e 's/.*&gt;\(.*\)&lt;.*/\1/') ]]; then
 ############## ERROR_OS_VERSION
         GET_LOCALE
@@ -530,7 +530,7 @@ usbnames=(); for (( i=0; i&lt;$pusb; i++ )); do usbname="$(echo ${usb_iolist[i]}
 
 for (( i=0; i&lt;$posd; i++ ))
  do
-    dmname=$( echo "$drives_iomedia" | grep -B 10 ${dmlist[i]} | grep -m 1 -w "IOMedia"  | cut -f1 -d "&lt;" | sed -e s'/-o //'  | sed -e s'/Media//' | sed 's/ *$//' | tr -d "\n")
+    dmname=$( echo "$drives_iomedia" | grep -B 10 -w ${dmlist[i]} | grep -m 1 -w "IOMedia"  | cut -f1 -d "&lt;" | sed -e s'/-o //'  | sed -e s'/Media//' | sed 's/ *$//' | tr -d "\n")
     if [[ ${#dmname} -gt 30 ]]; then dmname=$( echo "$dmname" | cut -f1-2 -d " " ); fi
         for (( n=0; n&lt;$pusb; n++ )); do if [[ ! $( echo "$dmname" | grep -oE "${usbnames[n]}" ) = ""  ]]; then rmlist+=( ${dmlist[i]} ); fi; done
  done                            
@@ -756,6 +756,8 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+4243fdcb81cf573a296b7fb9199deba6e8a18dd8bc56ade19eee855d3caad928 ) oc_revision=.76r;;
+0cce1dfa6e0a2ff6f425609ae91606dea0f63021d1605fe580eea882f3760823 ) oc_revision=.76d;;
 4243fdcb81cf573a296b7fb9199deba6f4ee8bbaf27fcb34367d6192b5db1eec ) oc_revision=.75r;;
 0cce1dfa6e0a2ff6f425609ae91606de5be2c6ee90d95f786e8d511ce2124055 ) oc_revision=.75d;;
 4243fdcb81cf573a296b7fb9199deba681a2ac329da9548da0ab0cb140eb9661 ) oc_revision=.74r;;
@@ -1001,7 +1003,7 @@ while [[ $var0 != 0 ]]; do
 	dstring=`echo $string | rev | cut -f2-3 -d"s" | rev`
     dlenth=`echo ${#dstring}`
 	let "corr=9-dlenth"
-    drive=`echo "$drives_iomedia" | grep -B 10 ${dstring} | grep -m 1 -w "IOMedia"  | cut -f1 -d "&lt;" | sed -e s'/-o //'  | sed -e s'/Media//' | sed 's/ *$//' | tr -d "\n"`
+    drive=`echo "$drives_iomedia" | grep -B 10 -w ${dstring} | grep -m 1 -w "IOMedia"  | cut -f1 -d "&lt;" | sed -e s'/-o //'  | sed -e s'/Media//' | sed 's/ *$//' | tr -d "\n"`
         if [[ ${#drive} -gt 30 ]]; then drive=$( echo "$drive" | cut -f1-2 -d " " ); fi
         GET_RENAMEHD
 		dcorr=${#drive}
@@ -1196,19 +1198,15 @@ fi
 
 if [[ $loc = "ru" ]]; then
 osascript &lt;&lt;EOD
-tell application "System Events"    activate
 set ThemeList to {$efi_prompt_list}
 set FavoriteThemeAnswer to choose from list ThemeList with title "EasyEFI v.${prog_vers:0:3}($edit_vers) / Список EFI (ESP) разделов"  with prompt "Выберите один или несколько (CMD + клик) для подключения:\nЗнаком + отмечены подключенные." with multiple selections allowed OK button name {"Выполнить!"} cancel button name {"Выход"}
-end tell
 EOD
 
 else
 
 osascript &lt;&lt;EOD
-tell application "System Events"    activate
 set ThemeList to {$efi_prompt_list}
 set FavoriteThemeAnswer to choose from list ThemeList with title "EasyEFI v.${prog_vers:0:3}($edit_vers) / EFI (ESP) partition list"  with prompt "Select one or more (CMD + click) to mount:\nA + sign indicates mounted.." with multiple selections allowed cancel button name {"Exit"}
-end tell
 EOD
 
 fi
@@ -1505,7 +1503,7 @@ usbnames=(); for (( i=0; i&lt;$pusb; i++ )); do usbname="$(echo ${usb_iolist[i]}
 
 for (( i=0; i&lt;$posd; i++ ))
  do
-    dmname=$( echo "$drives_iomedia" | grep -B 10 ${dmlist[i]} | grep -m 1 -w "IOMedia"  | cut -f1 -d "&lt;" | sed -e s'/-o //'  | sed -e s'/Media//' | sed 's/ *$//' | tr -d "\n")
+    dmname=$( echo "$drives_iomedia" | grep -B 10 -w ${dmlist[i]} | grep -m 1 -w "IOMedia"  | cut -f1 -d "&lt;" | sed -e s'/-o //'  | sed -e s'/Media//' | sed 's/ *$//' | tr -d "\n")
     if [[ ${#dmname} -gt 30 ]]; then dmname=$( echo "$dmname" | cut -f1-2 -d " " ); fi
         for (( n=0; n&lt;$pusb; n++ )); do if [[ ! $( echo "$dmname" | grep -oE "${usbnames[n]}" ) = ""  ]]; then rmlist+=( ${dmlist[i]} ); fi; done
  done                            
@@ -1583,7 +1581,7 @@ fi
 fi
 if [[ $hotplug = 1 ]]; then
 echo "${msgpid}" &gt; ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag
-pkill  "System Events"
+pkill "osascript"
 break
 fi
 
@@ -1662,8 +1660,8 @@ synchro=0
 }
 
 ################################### INIT ##################################################
-if [[ ! $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' ') = "" ]]; then 
-   kill $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' '); fi
+#if [[ ! $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' ') = "" ]]; then 
+#   kill $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' '); fi
 
 GET_FLAG
 
@@ -1703,7 +1701,7 @@ GETARR
 GETLIST
 KILL_DIALOG
 while true; do
-RESET_SYSTEM_PERMISSIONS
+#RESET_SYSTEM_PERMISSIONS
 #################### MAIN MENU #####################
 
 START_CHECK_HOTPLUG &amp;
@@ -1717,8 +1715,8 @@ if [[ -f ~/Library/Application\ Support/EasyEFIsupport/hotplugFlag ]]; then
 fi
 kill ${hotplug_pid}
 
-if [[ ! $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' ') = "" ]]; then 
-   kill $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' '); fi
+#if [[ ! $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' ') = "" ]]; then 
+#   kill $(ps ax | grep -v grep | grep "System Events" | xargs | cut -f1 -d' '); fi
 if [[ ${result_names} = "false" ]]; then break; fi
 
     modename=$(echo "${result_names}" | egrep -o "расширенный|advanced|упрощённый|simple")
