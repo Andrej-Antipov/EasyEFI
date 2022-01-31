@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 11.12.2021.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 31.01.2022.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="032"
+edit_vers="033"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -470,7 +470,7 @@ EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEF
 IF_CREATE_CONFIG
 mac_vers=($(sw_vers -productVersion | tr "." " "))
 macos="$((${mac_vers[0]}*10000+${mac_vers[1]}*100))"; if [[ ! ${mac_vers[2]} = "" ]]; then macos=$(($macos+${mac_vers[2]})); fi
-if [[ "${macos:0:4}" -gt "1210" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
+if [[ "${macos:0:4}" -gt "1220" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
     if [[ ! $(sw_vers -productVersion | tr -d .) = $(echo "$EasyEFIconf" | grep -A1 "&lt;key&gt;UnsupportedExecution&lt;/key&gt;" | grep string | sed -e 's/.*&gt;\(.*\)&lt;.*/\1/') ]]; then
 ############## ERROR_OS_VERSION
         GET_LOCALE
@@ -756,6 +756,8 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+3fbe1ee405bd404c20806e3e0e1f3fc3236d5622b556c56888dae3410dbcf2de ) oc_revision=.77r;;
+9919626606b15c2f5ff5f6f946084f1e7c09a5bd5c1554881b0acd1594b971be ) oc_revision=.77d;;
 4243fdcb81cf573a296b7fb9199deba6e8a18dd8bc56ade19eee855d3caad928 ) oc_revision=.76r;;
 0cce1dfa6e0a2ff6f425609ae91606dea0f63021d1605fe580eea882f3760823 ) oc_revision=.76d;;
 4243fdcb81cf573a296b7fb9199deba6f4ee8bbaf27fcb34367d6192b5db1eec ) oc_revision=.75r;;
@@ -830,7 +832,9 @@ fi
 if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
-############## oc_hashes_strings 42 #################
+############## oc_hashes_strings 44 #################
+3fbe1ee405bd404c20806e3e0e1f3fc3 ) oc_revision=.77x;;
+9919626606b15c2f5ff5f6f946084f1e ) oc_revision=.77x;;
 0cce1dfa6e0a2ff6f425609ae91606de ) oc_revision=.7xd;;
 4243fdcb81cf573a296b7fb9199deba6 ) oc_revision=.7xr;;
 a82baf091a7e07681feded93e76f5ef3 ) oc_revision=.72x;;
@@ -1282,7 +1286,10 @@ while [ $var1 != 0 ]; do
 					if [[ -f "$vname"/EFI/BOOT/BOOTX64.efi ]]; then loaderPath="/EFI/BOOT/bootx64.efi"; 
 					elif [[ -f "$vname"/System/Library/CoreServices/boot.efi ]]; then loaderPath="/System/Library/CoreServices/boot.efi"; fi			
 			if [[ ! "${loaderPath}" = "" ]]; then
+				check_loader=`xxd "$vname$loaderPath" | grep -Eo "Clover"` ; check_loader=`echo ${check_loader:0:6}`
+						if [[ ! "${check_loader}" = "Clover" ]]; then
 					check_loader=`xxd "$vname$loaderPath" | grep -Eo "OpenCore"` ; check_loader=`echo ${check_loader:0:8}`
+						fi
                 					if [[ ${check_loader} = "OpenCore" ]]; then
                        						 if [[ ! $OpenFinder = 0 ]]; then open "$vname/EFI"; fi
 							 was_mounted=1
