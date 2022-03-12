@@ -1,5 +1,5 @@
 # EasyEFI
-Window mode applet for mounting EFI partitions in Mac OS X 10.11 - 12.2
+Window mode applet for mounting EFI partitions in Mac OS X 10.11 - 12.3
 
 * Based on MountEFI recognition engine, using system events dialog window. https://github.com/Andrej-Antipov/MountEFI
 * Russian and English interface
