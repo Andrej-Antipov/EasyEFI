@@ -66,11 +66,11 @@ pkill ScriptMonitor
 
 ROOT="$(ps xao command | grep -i "EasyEFI.app" | grep -v grep | grep -v /bin/bash | sed 's/[^/]*$//' | xargs)./../Resources"
 
-#  Created by Андрей Антипов on 31.01.2022.#  Copyright © 2020 gosvamih. All rights reserved.
+#  Created by Андрей Антипов on 12.03.2022.#  Copyright © 2020 gosvamih. All rights reserved.
 
 ############################################################################## EasyEFI #########################################################################################################################
 prog_vers="1.0.0"
-edit_vers="033"
+edit_vers="034"
 ##################################################################################################################################################################################################################
 
 CHECK_CLEAN_AUTOUPDATE(){
@@ -470,7 +470,7 @@ EASYEFI_SUPPORT=$(echo "/Users/'"$(whoami)"'/Library/Application\ Support/EasyEF
 IF_CREATE_CONFIG
 mac_vers=($(sw_vers -productVersion | tr "." " "))
 macos="$((${mac_vers[0]}*10000+${mac_vers[1]}*100))"; if [[ ! ${mac_vers[2]} = "" ]]; then macos=$(($macos+${mac_vers[2]})); fi
-if [[ "${macos:0:4}" -gt "1220" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
+if [[ "${macos:0:4}" -gt "1230" ]] || [[ "${macos:0:4}" -lt "1009" ]]; then
     if [[ ! $(sw_vers -productVersion | tr -d .) = $(echo "$EasyEFIconf" | grep -A1 "&lt;key&gt;UnsupportedExecution&lt;/key&gt;" | grep string | sed -e 's/.*&gt;\(.*\)&lt;.*/\1/') ]]; then
 ############## ERROR_OS_VERSION
         GET_LOCALE
@@ -756,6 +756,10 @@ if [[ $strng = "false" ]]; then OpenFinder=0; fi
 
 CORRECT_OC_VERS(){
 case "${md5_full}" in
+3fbe1ee405bd404c20806e3e0e1f3fc325b357c3b0d7842e1bb99c18d1367fc0 ) oc_revision=.78r;;
+9919626606b15c2f5ff5f6f946084f1e7de24a3b50a581765a211fa45055214b ) oc_revision=.78d;;
+13185cbd67b25d6aefbaf871816952284b92f0e0291ce0cc0db9716ac0ed2724 ) oc_revision=.79r;;
+78c9a392af8b6ab5831e0617b0f56e80972daa56413cfe7f5bab31dbb6ccc68c ) oc_revision=.79d;;
 3fbe1ee405bd404c20806e3e0e1f3fc3236d5622b556c56888dae3410dbcf2de ) oc_revision=.77r;;
 9919626606b15c2f5ff5f6f946084f1e7c09a5bd5c1554881b0acd1594b971be ) oc_revision=.77d;;
 4243fdcb81cf573a296b7fb9199deba6e8a18dd8bc56ade19eee855d3caad928 ) oc_revision=.76r;;
@@ -833,8 +837,10 @@ if [[ ${oc_revision} = "" ]]; then
 
 case "${md5_loader}" in
 ############## oc_hashes_strings 44 #################
-3fbe1ee405bd404c20806e3e0e1f3fc3 ) oc_revision=.77x;;
-9919626606b15c2f5ff5f6f946084f1e ) oc_revision=.77x;;
+78c9a392af8b6ab5831e0617b0f56e80 ) oc_revision=.7xd;;
+13185cbd67b25d6aefbaf87181695228 ) oc_revision=.7xr;;
+3fbe1ee405bd404c20806e3e0e1f3fc3 ) oc_revision=.7xr;;
+9919626606b15c2f5ff5f6f946084f1e ) oc_revision=.7xd;;
 0cce1dfa6e0a2ff6f425609ae91606de ) oc_revision=.7xd;;
 4243fdcb81cf573a296b7fb9199deba6 ) oc_revision=.7xr;;
 a82baf091a7e07681feded93e76f5ef3 ) oc_revision=.72x;;
